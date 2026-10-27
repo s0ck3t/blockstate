@@ -58,22 +58,29 @@ repos:
       - id: ruff-format
 
   # ---------------------------------------------------------------------------
-  # 5. Local Enterprise Governance Gates (PII Guard, Architecture & Licences)
+  # 5. Local Enterprise Governance Gates (PII Guard, mypy, Architecture & Licences)
   # ---------------------------------------------------------------------------
   - repo: local
     hooks:
       - id: block-dotenv-and-trace-artifacts
         name: "Zero-Leakage Gate: Block .env, .blockstate/, WAL & DB files"
-        entry: python -c "import sys; bad = [f for f in sys.argv[1:] if (f.endswith('.env') or '.env.' in f) and not f.endswith(('.env.example', '.env.template')) or '.blockstate/' in f.replace('\\\\', '/') or f.endswith(('.wal', '.db', '.sqlite', '.pem', '.key'))]; sys.exit('BLOCKED sensitive file(s): ' + ', '.join(bad) if bad else 0)"
+        entry: >-
+          python -c "import sys; bad = [f for f in sys.argv[1:] if (f.endswith('.env') or '.env.' in f) and not f.endswith(('.env.example', '.env.template')) or '.blockstate/' in f.replace('\\\\', '/') or f.endswith(('.wal', '.db', '.sqlite', '.pem', '.key', '.db-wal', '.db-shm'))]; sys.exit('BLOCKED sensitive file(s): ' + ', '.join(bad) if bad else 0)"
         language: system
         pass_filenames: true
 
       - id: blockstate-pii-guard
         name: "Zero-Leakage Gate: Scan Staged Diffs for Raw PII (NINo, NHS, SSN, Cards, Bearer)"
-        entry: python -c "import re, sys, pathlib; pat = re.compile(r'(\b[A-CEGHJ-PR-TW-Z]{2}\d{6}[A-D]\b|\b\d{3}-\d{2}-\d{4}\b|\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14})\b|Bearer\s+[A-Za-z0-9\-._~+/]+=*|sk-[A-Za-z0-9]{20,})'); hits = [(f, m.group(0)[:10]+'...') for f in sys.argv[1:] if pathlib.Path(f).is_file() for m in pat.finditer(pathlib.Path(f).read_text(encoding='utf-8', errors='ignore'))]; sys.exit('PII/Credential pattern detected: ' + str(hits) if hits else 0)"
+        entry: uv run blockstate-pii-guard
         language: system
         types: [text]
-        exclude: '^(\.pre-commit-config\.yaml|tests/unit/test_pii_patterns\.py)$'
+        exclude: '^(\.pre-commit-config\.yaml|tests/unit/test_git_guard\.py|tests/unit/test_pii_patterns\.py)$'
+
+      - id: mypy-strict
+        name: "Type Safety Gate: Enforce mypy --strict on src and tests"
+        entry: uv run mypy --strict src tests
+        language: system
+        pass_filenames: false
 
       - id: import-linter-hexagonal
         name: "Architecture Gate: Enforce Hexagonal Core Isolation (AD-1)"
@@ -84,7 +91,8 @@ repos:
 
       - id: license-compliance-gate
         name: "Governance Gate: Verify Permissive Subcomponent Licences (AD-12)"
-        entry: uv run pip-licenses --allow-only="MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;Python-2.0;ISC;MPL-2.0"
+        entry: >-
+          uv run pip-licenses --allow-only="MIT;MIT License;MIT-0;0BSD;Apache-2.0;Apache Software License;Apache-2.0 OR BSD-3-Clause;Apache-2.0 OR BSD-2-Clause;Apache Software License; BSD License;BSD-2-Clause;BSD-3-Clause;BSD License;Python Software Foundation License;PSF-2.0;ISC License (ISCL);Mozilla Public License 2.0 (MPL 2.0);MPL-2.0"
         language: system
         pass_filenames: false
         stages: [pre-push]

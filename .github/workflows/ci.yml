@@ -1,0 +1,52 @@
+name: CI Quality, Security & Architecture Gates
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  quality-gates:
+    name: Verify Quality, Security & Architecture Gates
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Set up Python 3.12
+        run: uv python install 3.12
+
+      - name: Install dependencies and dev tools
+        run: uv sync --extra dev
+
+      - name: Lint and formatting check (Ruff)
+        run: |
+          uv run ruff check src tests
+          uv run ruff format --check src tests
+
+      - name: Zero-leakage PII and credential scan
+        run: |
+          uv run blockstate-pii-guard src/blockstate/ pyproject.toml .pre-commit-config.yaml tests/unit/test_config.py tests/unit/test_errors.py tests/unit/test_ports.py
+
+      - name: Strict type check (mypy)
+        run: uv run mypy --strict src tests
+
+      - name: Hexagonal architecture isolation gate (import-linter)
+        run: uv run lint-imports
+
+      - name: Unit test suite and coverage gate
+        run: uv run pytest tests/unit -v --cov=blockstate --cov-branch --cov-report=term-missing
+
+      - name: Subcomponent licence compliance gate (pip-licenses)
+        run: >-
+          uv run pip-licenses --allow-only="MIT;MIT License;MIT-0;0BSD;Apache-2.0;Apache Software License;Apache-2.0 OR BSD-3-Clause;Apache-2.0 OR BSD-2-Clause;Apache Software License; BSD License;BSD-2-Clause;BSD-3-Clause;BSD License;Python Software Foundation License;PSF-2.0;ISC License (ISCL);Mozilla Public License 2.0 (MPL 2.0);MPL-2.0"
