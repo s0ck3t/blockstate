@@ -79,6 +79,8 @@ class InMemoryLedgerSink:
 
     async def append(self, record: TurnLedgerRecord) -> None:
         """Append a validated turn record to the audit ledger."""
+        if any(r.record_hash == record.record_hash for r in self.records):
+            return
         self.records.append(record)
 
     async def flush(self) -> None:
@@ -88,6 +90,12 @@ class InMemoryLedgerSink:
     async def close(self) -> None:
         """No-op for in-memory buffer."""
         pass
+
+    async def get_records(self, session_id: str | None = None) -> list[TurnLedgerRecord]:
+        """Retrieve stored records filtered optionally by session identifier."""
+        if session_id is None:
+            return list(self.records)
+        return [r for r in self.records if r.session_id == session_id]
 
     def verify_hash_chain(self) -> bool:
         """Verify the cryptographic SHA-256 hash chain across all stored records."""

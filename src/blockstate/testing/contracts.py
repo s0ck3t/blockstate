@@ -10,7 +10,7 @@ import abc
 import asyncio
 import inspect
 import time
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from typing import Any
 
 import pytest
@@ -20,6 +20,12 @@ from blockstate.errors import (
     LeaseTimeoutError,
     OptimisticLockError,
     StorageError,
+)
+from blockstate.ports.ledger import (
+    LedgerSink,
+    TurnLedgerRecord,
+    compute_record_hash,
+    verify_record_hash,
 )
 from blockstate.ports.security import PIIStripper
 from blockstate.ports.storage import (
@@ -781,7 +787,294 @@ class StateStoreContractSuite(abc.ABC):
 
 StorageBackendContractSuite = StateStoreContractSuite
 
+
+class LedgerSinkContractSuite(abc.ABC):
+    """Reusable contract test suite for LedgerSink protocol implementations.
+
+    Subclasses must implement create_sink() returning an initialised instance
+    of the LedgerSink under test.
+    Pytest will execute all tests in this suite against that adapter.
+    """
+
+    # Do not collect base contract class directly as a test
+    __test__ = False
+
+    @abc.abstractmethod
+    def create_sink(self) -> Any:
+        """Create and return an initialised instance of the LedgerSink under test."""
+        ...
+
+    async def _get_sink(self) -> LedgerSink:
+        """Helper to resolve sync or async create_sink call."""
+        res = self.create_sink()
+        if inspect.isawaitable(res):
+            resolved = await res
+            return resolved  # type: ignore[no-any-return]
+        return res  # type: ignore[no-any-return]
+
+    async def _close_sink(self, sink: LedgerSink) -> None:
+        """Helper to gracefully close ledger sinks."""
+        if hasattr(sink, "close") and callable(sink.close):
+            res = sink.close()
+            if inspect.isawaitable(res):
+                await res
+
+    async def get_persisted_records(
+        self, sink: Any, session_id: str | None = None
+    ) -> list[TurnLedgerRecord]:
+        """Fetch persisted records from the sink for verification."""
+        if hasattr(sink, "get_records") and callable(sink.get_records):
+            res = sink.get_records(session_id=session_id)
+            if inspect.isawaitable(res):
+                return await res  # type: ignore[no-any-return]
+            return res  # type: ignore[no-any-return]
+        raise NotImplementedError(
+            "Subclass must implement get_persisted_records or sink must provide get_records"
+        )
+
+    def make_record(
+        self,
+        session_id: str = "test-session-1",
+        turn_index: int = 0,
+        prev_record_hash: str = "0" * 64,
+        stage_from: str = "initial",
+        stage_to: str = "active",
+        exposed_tools: Sequence[str] = ("get_balance", "transfer_funds"),
+        prompt_hash: str | None = None,
+        vaulted_input_hash: str | None = None,
+        vaulted_output_hash: str | None = None,
+        guard_outcome: str = "allow",
+        timestamp_utc: str = "2026-10-27T12:00:00.000000Z",
+    ) -> TurnLedgerRecord:
+        """Construct a validated TurnLedgerRecord with matching SHA-256 digest."""
+        p_hash = prompt_hash or ("a" * 64)
+        i_hash = vaulted_input_hash or ("b" * 64)
+        o_hash = vaulted_output_hash or ("c" * 64)
+        digest = compute_record_hash(
+            prev_record_hash=prev_record_hash,
+            session_id=session_id,
+            turn_index=turn_index,
+            stage_from=stage_from,
+            stage_to=stage_to,
+            exposed_tools=tuple(exposed_tools),
+            prompt_hash=p_hash,
+            vaulted_input_hash=i_hash,
+            vaulted_output_hash=o_hash,
+            guard_outcome=guard_outcome,
+            timestamp_utc=timestamp_utc,
+        )
+        return TurnLedgerRecord(
+            prev_record_hash=prev_record_hash,
+            session_id=session_id,
+            turn_index=turn_index,
+            stage_from=stage_from,
+            stage_to=stage_to,
+            exposed_tools=tuple(exposed_tools),
+            prompt_hash=p_hash,
+            vaulted_input_hash=i_hash,
+            vaulted_output_hash=o_hash,
+            guard_outcome=guard_outcome,
+            timestamp_utc=timestamp_utc,
+            record_hash=digest,
+        )
+
+    @pytest.mark.asyncio
+    async def test_protocol_conformance(self) -> None:
+        """Verify the instance satisfies runtime LedgerSink protocol check."""
+        sink = await self._get_sink()
+        try:
+            assert isinstance(sink, LedgerSink)
+        finally:
+            await self._close_sink(sink)
+
+    @pytest.mark.asyncio
+    async def test_append_single_record_and_flush(self) -> None:
+        """Verify appending a single record and flushing persists all fields accurately."""
+        sink = await self._get_sink()
+        session_id = "test-contract-single-record"
+        try:
+            rec = self.make_record(session_id=session_id, turn_index=0)
+            await sink.append(rec)
+            await sink.flush()
+
+            records = await self.get_persisted_records(sink, session_id=session_id)
+            assert len(records) == 1
+            stored = records[0]
+            assert stored.session_id == session_id
+            assert stored.turn_index == 0
+            assert stored.prev_record_hash == "0" * 64
+            assert stored.stage_from == "initial"
+            assert stored.stage_to == "active"
+            assert tuple(stored.exposed_tools) == ("get_balance", "transfer_funds")
+            assert stored.record_hash == rec.record_hash
+            assert verify_record_hash(stored)
+        finally:
+            await self._close_sink(sink)
+
+    @pytest.mark.asyncio
+    async def test_append_multiple_records_monotonic_ordering(self) -> None:
+        """Verify multiple records for the same session are persisted in ascending turn order."""
+        sink = await self._get_sink()
+        session_id = "test-contract-monotonic-order"
+        try:
+            rec0 = self.make_record(session_id=session_id, turn_index=0, prev_record_hash="0" * 64)
+            rec1 = self.make_record(
+                session_id=session_id, turn_index=1, prev_record_hash=rec0.record_hash
+            )
+            rec2 = self.make_record(
+                session_id=session_id, turn_index=2, prev_record_hash=rec1.record_hash
+            )
+
+            await sink.append(rec0)
+            await sink.append(rec1)
+            await sink.append(rec2)
+            await sink.flush()
+
+            records = await self.get_persisted_records(sink, session_id=session_id)
+            assert len(records) == 3
+            assert [r.turn_index for r in records] == [0, 1, 2]
+            assert records[0].record_hash == rec0.record_hash
+            assert records[1].record_hash == rec1.record_hash
+            assert records[2].record_hash == rec2.record_hash
+        finally:
+            await self._close_sink(sink)
+
+    @pytest.mark.asyncio
+    async def test_sha256_hash_chain_validity(self) -> None:
+        """Verify cryptographic SHA-256 hash chaining across consecutive turns."""
+        sink = await self._get_sink()
+        session_id = "test-contract-hash-chain"
+        try:
+            prev_hash = "0" * 64
+            records_written: list[TurnLedgerRecord] = []
+            for t in range(4):
+                rec = self.make_record(
+                    session_id=session_id,
+                    turn_index=t,
+                    prev_record_hash=prev_hash,
+                    timestamp_utc=f"2026-10-27T12:0{t}:00.000000Z",
+                )
+                await sink.append(rec)
+                records_written.append(rec)
+                prev_hash = rec.record_hash
+
+            await sink.flush()
+            loaded = await self.get_persisted_records(sink, session_id=session_id)
+            assert len(loaded) == 4
+
+            for i, item in enumerate(loaded):
+                assert verify_record_hash(item)
+                expected_prev = "0" * 64 if i == 0 else loaded[i - 1].record_hash
+                assert item.prev_record_hash == expected_prev
+        finally:
+            await self._close_sink(sink)
+
+    @pytest.mark.asyncio
+    async def test_multi_session_isolation_and_filtering(self) -> None:
+        """Verify interleaving records across multiple sessions preserves isolation."""
+        sink = await self._get_sink()
+        s_alpha = "session-alpha"
+        s_beta = "session-beta"
+        try:
+            a0 = self.make_record(session_id=s_alpha, turn_index=0)
+            b0 = self.make_record(session_id=s_beta, turn_index=0)
+            a1 = self.make_record(session_id=s_alpha, turn_index=1, prev_record_hash=a0.record_hash)
+            b1 = self.make_record(session_id=s_beta, turn_index=1, prev_record_hash=b0.record_hash)
+
+            # Interleaved appends
+            await sink.append(a0)
+            await sink.append(b0)
+            await sink.append(a1)
+            await sink.append(b1)
+            await sink.flush()
+
+            records_alpha = await self.get_persisted_records(sink, session_id=s_alpha)
+            assert len(records_alpha) == 2
+            assert [r.turn_index for r in records_alpha] == [0, 1]
+            assert all(r.session_id == s_alpha for r in records_alpha)
+
+            records_beta = await self.get_persisted_records(sink, session_id=s_beta)
+            assert len(records_beta) == 2
+            assert [r.turn_index for r in records_beta] == [0, 1]
+            assert all(r.session_id == s_beta for r in records_beta)
+
+            records_all = await self.get_persisted_records(sink, session_id=None)
+            assert len(records_all) >= 4
+        finally:
+            await self._close_sink(sink)
+
+    @pytest.mark.asyncio
+    async def test_duplicate_append_idempotency(self) -> None:
+        """Verify re-appending a record with identical record_hash is handled idempotently."""
+        sink = await self._get_sink()
+        session_id = "test-contract-idempotency"
+        try:
+            rec = self.make_record(session_id=session_id, turn_index=0)
+            await sink.append(rec)
+            await sink.flush()
+
+            # Re-append identical record
+            await sink.append(rec)
+            await sink.flush()
+
+            records = await self.get_persisted_records(sink, session_id=session_id)
+            assert len(records) == 1
+            assert records[0].record_hash == rec.record_hash
+        finally:
+            await self._close_sink(sink)
+
+    @pytest.mark.asyncio
+    async def test_boundary_payload_records(self) -> None:
+        """Verify boundary payloads with empty tools, special characters, and Unicode text."""
+        sink = await self._get_sink()
+        session_id = "test-contract-boundary-payload"
+        try:
+            rec = self.make_record(
+                session_id=session_id,
+                turn_index=0,
+                stage_from="étape_initiale_🚀",
+                stage_to="مرحلة_النهائية",
+                exposed_tools=(),
+                prompt_hash="f" * 64,
+                vaulted_input_hash="0" * 64,
+                vaulted_output_hash="e" * 64,
+                guard_outcome="transferred_to_human_agent",
+                timestamp_utc="2026-10-27T23:59:59.999999Z",
+            )
+            await sink.append(rec)
+            await sink.flush()
+
+            records = await self.get_persisted_records(sink, session_id=session_id)
+            assert len(records) == 1
+            stored = records[0]
+            assert stored.stage_from == "étape_initiale_🚀"
+            assert stored.stage_to == "مرحلة_النهائية"
+            assert tuple(stored.exposed_tools) == ()
+            assert stored.guard_outcome == "transferred_to_human_agent"
+            assert stored.record_hash == rec.record_hash
+            assert verify_record_hash(stored)
+        finally:
+            await self._close_sink(sink)
+
+    @pytest.mark.asyncio
+    async def test_flush_and_close_idempotent(self) -> None:
+        """Verify repeated calls to flush() and close() execute without exceptions."""
+        sink = await self._get_sink()
+        session_id = "test-contract-flush-close"
+        try:
+            rec = self.make_record(session_id=session_id, turn_index=0)
+            await sink.append(rec)
+            await sink.flush()
+            await sink.flush()
+            await sink.close()
+            await sink.close()
+        finally:
+            # sink already closed
+            pass
+
+
 __all__: list[str] = [
+    "LedgerSinkContractSuite",
     "PIIStripperContractSuite",
     "StateStoreContractSuite",
     "StorageBackendContractSuite",

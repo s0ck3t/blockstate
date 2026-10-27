@@ -1,6 +1,10 @@
 """Blockstate testing utilities and reusable port contract verification suites."""
 
-from blockstate.testing.contracts import PIIStripperContractSuite
+from blockstate.testing.contracts import (
+    LedgerSinkContractSuite,
+    PIIStripperContractSuite,
+    StateStoreContractSuite,
+)
 from blockstate.testing.strategies import (
     FIELD_NAMES_POOL,
     get_leaf_annotation,
@@ -13,7 +17,9 @@ from blockstate.testing.strategies import (
 
 __all__: list[str] = [
     "FIELD_NAMES_POOL",
+    "LedgerSinkContractSuite",
     "PIIStripperContractSuite",
+    "StateStoreContractSuite",
     "get_leaf_annotation",
     "st_candidate_slots",
     "st_leaf_value",

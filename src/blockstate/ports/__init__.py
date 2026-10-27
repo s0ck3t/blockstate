@@ -4,7 +4,12 @@ Public exports for wire DTOs and protocols across storage, outer orchestrator
 enclaves, models, audit ledgers, and zero-trust security boundaries.
 """
 
-from blockstate.ports.ledger import LedgerSink, TurnLedgerRecord
+from blockstate.ports.ledger import (
+    LedgerSink,
+    TurnLedgerRecord,
+    compute_record_hash,
+    verify_record_hash,
+)
 from blockstate.ports.models import ExtractionResult, IntentClassifier, ResponseRenderer
 from blockstate.ports.security import PIIStripper, SanitisedPayload
 from blockstate.ports.storage import (
@@ -41,5 +46,7 @@ __all__ = [
     "StorageBackend",
     "TurnEnvelope",
     "TurnLedgerRecord",
+    "compute_record_hash",
     "upcast_checkpoint_payload",
+    "verify_record_hash",
 ]
