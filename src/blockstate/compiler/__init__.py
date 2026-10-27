@@ -7,6 +7,7 @@ tree solving, and Mermaid/JSON topology exporters.
 from blockstate.compiler.ast_extractor import (
     StageNode,
     StatechartGraph,
+    StaticGraphCompiler,
     TransitionEdge,
     extract_statechart_from_ast,
     extract_statechart_from_file,
@@ -28,6 +29,7 @@ __all__: list[str] = [
     "LengauerTarjanSolver",
     "StageNode",
     "StatechartGraph",
+    "StaticGraphCompiler",
     "TransitionEdge",
     "export_json",
     "export_mermaid",

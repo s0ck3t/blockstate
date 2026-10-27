@@ -27,6 +27,7 @@ Issues = "https://github.com/s0ck3t/blockstate/issues"
 Documentation = "https://github.com/s0ck3t/blockstate#readme"
 
 [project.scripts]
+blockstate = "blockstate.cli.main:app"
 blockstate-pii-guard = "blockstate.security.git_guard:main"
 
 [project.optional-dependencies]

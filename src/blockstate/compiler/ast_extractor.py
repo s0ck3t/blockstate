@@ -346,10 +346,18 @@ class _DCGASTVisitor(ast.NodeVisitor):
         return ""
 
     def _parse_guard_target(self, dec: ast.expr, lineno: int) -> str:
-        if isinstance(dec, ast.Call) and dec.args:
-            first_arg = dec.args[0]
-            if isinstance(first_arg, ast.Constant) and isinstance(first_arg.value, str):
-                return first_arg.value
+        if isinstance(dec, ast.Call):
+            if dec.args:
+                first_arg = dec.args[0]
+                if isinstance(first_arg, ast.Constant) and isinstance(first_arg.value, str):
+                    return first_arg.value
+            for kw in dec.keywords:
+                if (
+                    kw.arg in ("stage", "target")
+                    and isinstance(kw.value, ast.Constant)
+                    and isinstance(kw.value.value, str)
+                ):
+                    return kw.value.value
         raise InvalidStageGraphError(
             f"@Guard decorator must specify target stage name as string at "
             f"{self.filename}:{lineno}",
@@ -521,9 +529,40 @@ def extract_statechart_from_file(
     )
 
 
+class StaticGraphCompiler:
+    """Static Declarative Control Grammar AST compiler."""
+
+    @staticmethod
+    def compile_source(
+        source: str,
+        filename: str = "<string>",
+        *,
+        validate_reachability: bool = True,
+    ) -> StatechartGraph:
+        """Parse Python source code and extract a validated StatechartGraph offline."""
+        return extract_statechart_from_source(
+            source,
+            filename=filename,
+            validate_reachability=validate_reachability,
+        )
+
+    @staticmethod
+    def compile_file(
+        file_path: str | Path,
+        *,
+        validate_reachability: bool = True,
+    ) -> StatechartGraph:
+        """Read a Python source file and extract a validated StatechartGraph offline."""
+        return extract_statechart_from_file(
+            file_path,
+            validate_reachability=validate_reachability,
+        )
+
+
 __all__: list[str] = [
     "StageNode",
     "StatechartGraph",
+    "StaticGraphCompiler",
     "TransitionEdge",
     "extract_statechart_from_ast",
     "extract_statechart_from_file",

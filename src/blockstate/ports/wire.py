@@ -13,7 +13,29 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class BlockstateTurnYield(BaseModel):
+class _WireDTOMixin:
+    """Provides dictionary-like subscripting for wire DTOs and backward compatibility."""
+
+    def __getitem__(self, key: str) -> Any:
+        if hasattr(self, key):
+            return getattr(self, key)
+        if key == "user_message":
+            return getattr(self, "_user_message", getattr(self, "message", ""))
+        if key == "initial_context":
+            return getattr(self, "_initial_context", {})
+        raise KeyError(key)
+
+    def get(self, key: str, default: Any = None) -> Any:
+        try:
+            return self[key]
+        except KeyError:
+            return default
+
+    def __contains__(self, key: str) -> bool:
+        return hasattr(self, key) or key in ("user_message", "initial_context")
+
+
+class BlockstateTurnYield(BaseModel, _WireDTOMixin):
     """Enclave yield DTO representing an in-progress conversational turn."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
@@ -25,7 +47,7 @@ class BlockstateTurnYield(BaseModel):
     missing_slots: Sequence[str] = Field(default_factory=tuple)
 
 
-class BlockstateTurnAborted(BaseModel):
+class BlockstateTurnAborted(BaseModel, _WireDTOMixin):
     """Enclave terminal DTO representing an aborted execution flow."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
@@ -36,7 +58,7 @@ class BlockstateTurnAborted(BaseModel):
     reason: str
 
 
-class BlockstateTurnComplete[T](BaseModel):
+class BlockstateTurnComplete[T](BaseModel, _WireDTOMixin):
     """Enclave terminal DTO representing successful completion with typed result."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")

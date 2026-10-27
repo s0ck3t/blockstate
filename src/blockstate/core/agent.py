@@ -283,20 +283,22 @@ class Agent:
             code="BLK-CFG-002",
         )
 
-    def as_tool(self, name: str | None = None) -> Any:
+    def as_tool(self, *args: Any, **kwargs: Any) -> Any:
         """Mount this agent as a transactional compliance execution enclave tool."""
         # Enclave adapter hook connecting to outer orchestrators
-        tool_name = name or self.__class__.__name__
+        tool_name = kwargs.get("name") or (args[0] if args else self.__class__.__name__)
         return {"name": tool_name, "enclave": self}
 
     async def run_as_subflow(
         self,
-        session_id: str,
-        user_message: str,
-        initial_context: Mapping[str, Any] | None = None,
+        *args: Any,
+        **kwargs: Any,
     ) -> Any:
         """Execute a sub-flow conversational turn within this agent enclave."""
         # Sub-flow entrypoint for enclave invocation
+        session_id = kwargs.get("session_id") or (args[0] if len(args) > 0 else "default_session")
+        user_message = kwargs.get("user_message") or (args[1] if len(args) > 1 else "")
+        initial_context = kwargs.get("initial_context") or (args[2] if len(args) > 2 else {})
         return {
             "session_id": session_id,
             "user_message": user_message,
