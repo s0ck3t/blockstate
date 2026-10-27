@@ -7,6 +7,7 @@ from blockstate.core.agent import (
     StageDefinition,
     Transition,
 )
+from blockstate.core.engine import StatechartEngine
 from blockstate.core.gatekeeper import (
     RunContext,
     ToolGatekeeper,
@@ -50,6 +51,7 @@ __all__: list[str] = [
     "SlotMutation",
     "Stage",
     "StageDefinition",
+    "StatechartEngine",
     "TaskFrame",
     "TaskFrameState",
     "TaskStack",
