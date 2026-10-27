@@ -1,0 +1,126 @@
+# =============================================================================
+# Blockstate (blockstate) — Enterprise Git Ignore Policy (AD-13)
+# Strictly prevents accidental commits of secrets, PII traces, WALs, & caches.
+# =============================================================================
+
+# --- 1. Secrets, Credentials & Environment Files (CRITICAL: Rule 4 & AD-13) --
+.env
+*.env
+.env.*
+!.env.example
+!.env.template
+secrets.yaml
+secrets.yml
+*.secrets.json
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.csr
+*.der
+*.jks
+*.keystore
+credentials.json
+client_secret*.json
+service-account*.json
+aws-credentials*
+.vault-token
+
+# --- 2. Blockstate Local Runtime Traces, Write-Ahead Logs & Audit Stores -----
+.blockstate/
+*.wal
+*.ledger
+*.trace.jsonl
+traces.jsonl
+audit_export_*.json
+
+# --- 3. Local Databases & Persistent State Dumps -----------------------------
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+*.sqlite3-journal
+dump.rdb
+
+# --- 4. Python Bytecode, Packaging & Distribution ----------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.pyd
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# --- 5. Virtual Environments -------------------------------------------------
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# --- 6. Unit Testing, Coverage, Property Fuzzing & Static Analysis -----------
+.pytest_cache/
+.hypothesis/
+.coverage
+.coverage.*
+coverage.xml
+coverage.json
+htmlcov/
+.tox/
+.nox/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyright/
+.ruff_cache/
+.import_linter_cache/
+bandit-report.json
+
+# --- 7. Local ONNX / System-1 Model Weights & Cache --------------------------
+models/*.onnx
+models/*.bin
+models/*.safetensors
+.onnx_cache/
+.huggingface/
+
+# --- 8. IDE, Editor & OS Artifacts -------------------------------------------
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# --- 9. Local Agent Scaffolding & Internal Research (Untracked) ---------------
+.agents/
+_bmad/
+_bmad-output/
+.hyperresearch/
+research/
+*.memlog.md
+CLAUDE.md
+project_brief_*.md
+

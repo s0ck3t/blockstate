@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blockstate (blockstate) — Enterprise Architecture Deck</title>
+  <style>
+    :root {
+      --bg-primary: #0b0f19;
+      --bg-secondary: #111827;
+      --bg-card: #1e293b;
+      --bg-card-hover: #26354d;
+      --border-subtle: #334155;
+      --text-primary: #f8fafc;
+      --text-secondary: #cbd5e1;
+      --text-muted: #94a3b8;
+      --accent-blue: #38bdf8;
+      --accent-indigo: #818cf8;
+      --accent-emerald: #34d399;
+      --accent-amber: #fbbf24;
+      --accent-rose: #fb7185;
+      --accent-violet: #c084fc;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: radial-gradient(circle at 15% 15%, #172554 0%, var(--bg-primary) 45%);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* Top Header & Navigation */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 2rem;
+      background: rgba(17, 24, 39, 0.88);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-subtle);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brand-badge {
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-indigo));
+      color: #0f172a;
+      font-weight: 800;
+      font-family: var(--font-mono);
+      padding: 0.35rem 0.65rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+    }
+
+    .brand-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .brand-subtitle {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-left: 0.5rem;
+    }
+
+    .slide-nav {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+    }
+
+    .nav-pill {
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-subtle);
+      padding: 0.45rem 0.85rem;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .nav-pill:hover {
+      background: var(--bg-card-hover);
+      color: var(--text-primary);
+    }
+
+    .nav-pill.active {
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(129, 140, 248, 0.25));
+      border-color: var(--accent-blue);
+      color: var(--accent-blue);
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.25);
+    }
+
+    /* Slide Container */
+    main {
+      flex: 1;
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    .slide {
+      display: none;
+      animation: fadeIn 0.25s ease-out;
+    }
+
+    .slide.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .slide-header {
+      margin-bottom: 1.75rem;
+    }
+
+    .slide-kicker {
+      color: var(--accent-blue);
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.4rem;
+    }
+
+    .slide-title {
+      font-size: 2rem;
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 0.5rem;
+    }
+
+    .slide-lead {
+      color: var(--text-secondary);
+      font-size: 1.05rem;
+      max-width: 960px;
+      line-height: 1.55;
+    }
+
+    /* Grids & Cards */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .card {
+      background: rgba(30, 41, 59, 0.78);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 1.4rem;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.35);
+    }
+
+    .card-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 0.65rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .badge {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    .badge-blue { background: rgba(56, 189, 248, 0.15); color: var(--accent-blue); border: 1px solid rgba(56, 189, 248, 0.35); }
+    .badge-emerald { background: rgba(52, 211, 153, 0.15); color: var(--accent-emerald); border: 1px solid rgba(52, 211, 153, 0.35); }
+    .badge-amber { background: rgba(251, 191, 36, 0.15); color: var(--accent-amber); border: 1px solid rgba(251, 191, 36, 0.35); }
+    .badge-rose { background: rgba(251, 113, 133, 0.15); color: var(--accent-rose); border: 1px solid rgba(251, 113, 133, 0.35); }
+    .badge-violet { background: rgba(192, 132, 252, 0.15); color: var(--accent-violet); border: 1px solid rgba(192, 132, 252, 0.35); }
+
+    .metric-value {
+      font-size: 2.1rem;
+      font-weight: 800;
+      font-family: var(--font-mono);
+      color: var(--accent-emerald);
+      margin: 0.3rem 0;
+    }
+
+    .metric-label {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      line-height: 1.4;
+    }
+
+    ul.feature-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    ul.feature-list li {
+      color: var(--text-secondary);
+      font-size: 0.92rem;
+      line-height: 1.5;
+      padding-left: 1.25rem;
+      position: relative;
+    }
+
+    ul.feature-list li::before {
+      content: "▹";
+      position: absolute;
+      left: 0;
+      color: var(--accent-blue);
+      font-weight: bold;
+    }
+
+    code {
+      font-family: var(--font-mono);
+      font-size: 0.84em;
+      background: rgba(15, 23, 42, 0.75);
+      color: var(--accent-blue);
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      border: 1px solid rgba(51, 65, 85, 0.6);
+    }
+
+    pre {
+      background: #090d16;
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 1rem;
+      overflow-x: auto;
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      line-height: 1.55;
+      color: #e2e8f0;
+      margin-top: 0.75rem;
+    }
+
+    .svg-container {
+      background: #090d16;
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+      overflow-x: auto;
+      text-align: center;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+      margin-top: 0.5rem;
+    }
+
+    th, td {
+      padding: 0.7rem 0.9rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    th {
+      color: var(--accent-blue);
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: rgba(15, 23, 42, 0.6);
+    }
+
+    tr:hover td {
+      background: rgba(38, 53, 77, 0.35);
+    }
+
+    footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      background: rgba(17, 24, 39, 0.9);
+      border-top: 1px solid var(--border-subtle);
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+
+    .footer-controls {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .btn {
+      background: var(--bg-card);
+      color: var(--text-primary);
+      border: 1px solid var(--border-subtle);
+      padding: 0.45rem 1rem;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.82rem;
+    }
+
+    .btn:hover {
+      border-color: var(--accent-blue);
+      color: var(--accent-blue);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <span class="brand-badge">BLOCKSTATE</span>
+      <div>
+        <span class="brand-title">Enterprise Architecture Spine Deck</span>
+        <span class="brand-subtitle">v1.0 · Deterministic Agent Governance &amp; Transactional Compliance Enclave</span>
+      </div>
+    </div>
+    <nav class="slide-nav" id="slideNav">
+      <button class="nav-pill active" onclick="showSlide(0)">1. Paradigm &amp; SLAs</button>
+      <button class="nav-pill" onclick="showSlide(1)">2. Hexagonal &amp; Storage SPI</button>
+      <button class="nav-pill" onclick="showSlide(2)">3. Two-Pass, TaskStack &amp; Enclave</button>
+      <button class="nav-pill" onclick="showSlide(3)">4. DCG &amp; Dominator Proofs</button>
+      <button class="nav-pill" onclick="showSlide(4)">5. Zero-Trust &amp; PIIVault</button>
+      <button class="nav-pill" onclick="showSlide(5)">6. Testing, Licences &amp; Hooks</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- SLIDE 1: PARADIGM & SLAS -->
+    <section class="slide active" id="slide-0">
+      <div class="slide-header">
+        <div class="slide-kicker">Slide 1 of 6 · Architectural Vision &amp; Non-Functional Envelope</div>
+        <h1 class="slide-title">Inverting the Control Hierarchy: The LLM is Never the Orchestrator</h1>
+        <p class="slide-lead">
+          Blockstate (<code>pip install blockstate</code>) replaces probabilistic ReAct loops with a <strong>Deterministic Python Pushdown Statechart Engine</strong>, a <strong>Declarative Control Grammar (DCG)</strong>, physical per-stage tool containment, and a first-class <code>as_tool()</code> <strong>Transactional Compliance Execution Enclave</strong> for regulated industries (EU AI Act, UK FCA SYSC 13.7, HIPAA, SOC 2).
+        </p>
+      </div>
+
+      <div class="grid-4">
+        <div class="card">
+          <div class="card-title"><span>Core Turn Overhead</span><span class="badge badge-emerald">NFR-10.1</span></div>
+          <div class="metric-value">&le; 5ms</div>
+          <div class="metric-label">Pure Python guard evaluation, <code>TaskStack</code> manipulation, and <code>MappingProxyType</code> tool dispatch lookup.</div>
+        </div>
+        <div class="card">
+          <div class="card-title"><span>Pass 1 &amp; Choice SLA</span><span class="badge badge-blue">SM-4</span></div>
+          <div class="metric-value">&lt; 100ms</div>
+          <div class="metric-label">System-1 local ONNX p95 extraction <code>&le; 50ms</code>; end-to-end template / <code>ChoicePayload</code> turns <code>&lt; 120ms</code>.</div>
+        </div>
+        <div class="card">
+          <div class="card-title"><span>Memory &amp; Throughput</span><span class="badge badge-violet">NFR-10.1</span></div>
+          <div class="metric-value">&ge; 250 TPS</div>
+          <div class="metric-label">Concurrent turns/sec per 2 vCPU async worker with <code>&le; 40MB</code> core resident RAM footprint.</div>
+        </div>
+        <div class="card">
+          <div class="card-title"><span>Enforced Coverage</span><span class="badge badge-amber">AD-11</span></div>
+          <div class="metric-value">&ge; 95%</div>
+          <div class="metric-label">Line coverage (<code>&ge; 90%</code> branch) on <code>core</code>, <code>compiler</code>, and <code>security</code> + Port Contract Suites.</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title"><span>Why Legacy ReAct Loops Fail Regulated Audits</span><span class="badge badge-rose">Probabilistic Risk</span></div>
+          <ul class="feature-list">
+            <li><strong>Global Tool Bag Exposure:</strong> Every tool exists in the model's prompt and dispatcher on every turn; prompt injection can trigger unauthorised payouts or account mutations.</li>
+            <li><strong>Rice's Theorem &amp; Unverifiable Flow:</strong> Arbitrary Python reflection and free-text LLM reasoning make it mathematically undecidable to prove that KYC always precedes disbursement.</li>
+            <li><strong>The Enterprise Island Trap:</strong> Demanding that enterprises rip-and-replace existing LangGraph, Semantic Kernel, or Bedrock estates blocks adoption.</li>
+            <li><strong>PII Leakage &amp; Mutable Logs:</strong> Raw postcodes, NHS numbers, and card details enter commercial LLM prompts and un-chained JSON logs.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="card-title"><span>The Blockstate Architectural Guarantees (AD-1 to AD-14)</span><span class="badge badge-emerald">Deterministic Assurance</span></div>
+          <ul class="feature-list">
+            <li><strong>Single-Owner State Mutation (<code>AD-2</code>):</strong> Only <code>StatechartEngine.commit_turn()</code> mutates state; guards and tools receive frozen <code>ReadOnlySessionView</code> snapshots.</li>
+            <li><strong>Zero-Trust Tool Gating (<code>AD-3</code>):</strong> Unlisted tools are physically absent from both the JSON schema and the turn's frozen <code>MappingProxyType</code> dispatch table.</li>
+            <li><strong>Declarative Control Grammar &amp; AST Compiler (<code>AD-4</code>):</strong> <code>blockstate verify</code> rejects dynamic reflection (<code>[Blockstate E014]</code>) and proves Lengauer-Tarjan dominators in <code>&lt; 50ms</code>.</li>
+            <li><strong>Transactional Enclave &amp; Sliced v1 Storage (<code>AD-9</code>, <code>AD-10</code>):</strong> Plug into LangGraph via <code>as_tool()</code> with v1 <code>StorageBackend</code> SPI (In-Memory, SQLite WAL, PostgreSQL).</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 2: HEXAGONAL KERNEL & STORAGE SPI -->
+    <section class="slide" id="slide-1">
+      <div class="slide-header">
+        <div class="slide-kicker">Slide 2 of 6 · AD-1 &amp; AD-9 · Hexagonal Architecture &amp; Version 1 Storage Slicing</div>
+        <h1 class="slide-title">Hexagonal Core Isolation, <code>StorageBackend</code> SPI &amp; PEP 621 Extras</h1>
+        <p class="slide-lead">
+          The Pure Domain Kernel (<code>blockstate.core</code>, <code>blockstate.compiler</code>, <code>blockstate.security</code>) depends strictly on Python 3.12+ stdlib, <code>pydantic</code>, and <code>cryptography</code>. Version 1 slices persistence to three canonical backends behind the async <code>StorageBackend</code> SPI (In-Memory, SQLite WAL, PostgreSQL), deferring Redis, MS SQL Server, and DynamoDB to v1.2+.
+        </p>
+      </div>
+
+      <div class="svg-container">
+        <svg width="1100" height="420" viewBox="0 0 1100 420" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="kernelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#064e3b" stop-opacity="0.7" />
+              <stop offset="100%" stop-color="#0f172a" stop-opacity="0.9" />
+            </linearGradient>
+            <linearGradient id="portGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#1e3a8a" stop-opacity="0.55" />
+              <stop offset="100%" stop-color="#0f172a" stop-opacity="0.85" />
+            </linearGradient>
+            <marker id="arrowBlue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="#38bdf8" />
+            </marker>
+          </defs>
+
+          <!-- Outer Adapter Ring -->
+          <rect x="20" y="15" width="1060" height="390" rx="16" fill="#111827" stroke="#334155" stroke-width="2" />
+          <text x="45" y="42" fill="#94a3b8" font-family="monospace" font-size="13" font-weight="bold">OUTER RING: blockstate.adapters.* &amp; blockstate.cli (PEP 621 Optional Extras)</text>
+
+          <!-- Adapter Boxes Left & Right -->
+          <rect x="45" y="65" width="220" height="72" rx="8" fill="#1e293b" stroke="#475569" />
+          <text x="60" y="90" fill="#38bdf8" font-family="monospace" font-size="12" font-weight="bold">adapters.storage (v1)</text>
+          <text x="60" y="110" fill="#cbd5e1" font-family="sans-serif" font-size="11">In-Memory · SQLite (WAL)</text>
+          <text x="60" y="126" fill="#cbd5e1" font-family="sans-serif" font-size="11">PostgreSQL (SQLAlchemy Async)</text>
+
+          <rect x="45" y="155" width="220" height="72" rx="8" fill="#1e293b" stroke="#475569" />
+          <text x="60" y="180" fill="#c084fc" font-family="monospace" font-size="12" font-weight="bold">adapters.models</text>
+          <text x="60" y="200" fill="#cbd5e1" font-family="sans-serif" font-size="11">ONNX System-1 (&lt;50ms)</text>
+          <text x="60" y="216" fill="#cbd5e1" font-family="sans-serif" font-size="11">PydanticAI · LiteLLM (&lt;1.107)</text>
+
+          <rect x="45" y="245" width="220" height="72" rx="8" fill="#1e293b" stroke="#475569" />
+          <text x="60" y="270" fill="#fbbf24" font-family="monospace" font-size="12" font-weight="bold">adapters.ledger</text>
+          <text x="60" y="290" fill="#cbd5e1" font-family="sans-serif" font-size="11">Session Ring Buffer + WAL</text>
+          <text x="60" y="306" fill="#cbd5e1" font-family="sans-serif" font-size="11">PostgresSink · S3 WORM Sink</text>
+
+          <rect x="835" y="65" width="220" height="72" rx="8" fill="#1e293b" stroke="#475569" />
+          <text x="850" y="90" fill="#34d399" font-family="monospace" font-size="12" font-weight="bold">blockstate.cli</text>
+          <text x="850" y="110" fill="#cbd5e1" font-family="sans-serif" font-size="11">blockstate check / verify</text>
+          <text x="850" y="126" fill="#cbd5e1" font-family="sans-serif" font-size="11">blockstate trace / export</text>
+
+          <rect x="835" y="155" width="220" height="72" rx="8" fill="#1e293b" stroke="#475569" />
+          <text x="850" y="180" fill="#38bdf8" font-family="monospace" font-size="12" font-weight="bold">adapters.telemetry</text>
+          <text x="850" y="200" fill="#cbd5e1" font-family="sans-serif" font-size="11">OpenTelemetry GenAI 1.30</text>
+          <text x="850" y="216" fill="#cbd5e1" font-family="sans-serif" font-size="11">.blockstate/traces.jsonl</text>
+
+          <rect x="835" y="245" width="220" height="72" rx="8" fill="#1e293b" stroke="#475569" />
+          <text x="850" y="270" fill="#fb7185" font-family="monospace" font-size="12" font-weight="bold">adapters.langchain</text>
+          <text x="850" y="290" fill="#cbd5e1" font-family="sans-serif" font-size="11">as_tool() Enclave Adapter</text>
+          <text x="850" y="306" fill="#cbd5e1" font-family="sans-serif" font-size="11">LangGraph / SK / AutoGen</text>
+
+          <!-- Middle Protocol Ring -->
+          <rect x="305" y="60" width="490" height="315" rx="14" fill="url(#portGrad)" stroke="#38bdf8" stroke-width="2" />
+          <text x="325" y="86" fill="#38bdf8" font-family="monospace" font-size="13" font-weight="bold">PROTOCOL &amp; SPI RING: blockstate.ports (typing.Protocol)</text>
+          <text x="325" y="106" fill="#cbd5e1" font-family="monospace" font-size="11">StorageBackend SPI · IntentClassifier · ResponseRenderer · LedgerSink · PIIStripper</text>
+
+          <!-- Inner Pure Kernel -->
+          <rect x="330" y="122" width="440" height="232" rx="10" fill="url(#kernelGrad)" stroke="#34d399" stroke-width="2" />
+          <text x="348" y="148" fill="#34d399" font-family="monospace" font-size="13" font-weight="bold">PURE DOMAIN KERNEL (Stdlib + Pydantic + Cryptography ONLY)</text>
+
+          <rect x="348" y="164" width="404" height="52" rx="6" fill="#0f172a" stroke="#10b981" />
+          <text x="362" y="185" fill="#f8fafc" font-family="monospace" font-size="12" font-weight="bold">blockstate.core</text>
+          <text x="362" y="203" fill="#94a3b8" font-family="sans-serif" font-size="11">StatechartEngine · TaskStack · PartialSlotModel · ToolGatekeeper</text>
+
+          <rect x="348" y="226" width="196" height="54" rx="6" fill="#0f172a" stroke="#10b981" />
+          <text x="360" y="247" fill="#f8fafc" font-family="monospace" font-size="12" font-weight="bold">blockstate.compiler</text>
+          <text x="360" y="265" fill="#94a3b8" font-family="sans-serif" font-size="11">DCG AST · [Blockstate E014]</text>
+
+          <rect x="556" y="226" width="196" height="54" rx="6" fill="#0f172a" stroke="#10b981" />
+          <text x="568" y="247" fill="#f8fafc" font-family="monospace" font-size="12" font-weight="bold">blockstate.security</text>
+          <text x="568" y="265" fill="#94a3b8" font-family="sans-serif" font-size="11">PIIVault · AES-256-GCM</text>
+
+          <rect x="348" y="290" width="404" height="48" rx="6" fill="#0f172a" stroke="#38bdf8" />
+          <text x="362" y="311" fill="#38bdf8" font-family="monospace" font-size="12" font-weight="bold">blockstate.testing.contracts</text>
+          <text x="362" y="328" fill="#94a3b8" font-family="sans-serif" font-size="11">StorageBackendContractSuite, Enclave &amp; Hypothesis Fuzzers</text>
+
+          <!-- Dependency Arrows (All pointing INWARD) -->
+          <line x1="265" y1="100" x2="303" y2="100" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrowBlue)" />
+          <line x1="265" y1="190" x2="303" y2="190" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrowBlue)" />
+          <line x1="265" y1="280" x2="303" y2="280" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrowBlue)" />
+          <line x1="835" y1="100" x2="797" y2="100" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrowBlue)" />
+          <line x1="835" y1="190" x2="797" y2="190" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrowBlue)" />
+          <line x1="835" y1="280" x2="797" y2="280" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrowBlue)" />
+        </svg>
+      </div>
+
+      <div class="grid-3">
+        <div class="card">
+          <div class="card-title"><span>import-linter Enforcement</span><span class="badge badge-emerald">AD-1</span></div>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5;">
+            CI runs <code>uv run lint-imports</code> on every push. Any import from <code>blockstate.adapters</code> inside <code>blockstate.core</code>, <code>compiler</code>, or <code>security</code> fails the build immediately.
+          </p>
+        </div>
+        <div class="card">
+          <div class="card-title"><span>Version 1 Storage Slicing</span><span class="badge badge-blue">AD-9 · StorageBackend SPI</span></div>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5;">
+            v1 ships 3 focused backends: <strong>In-Memory</strong> (CI/tests), <strong>Local SQLite with WAL mode</strong> (<code>PRAGMA journal_mode=WAL</code>), and <strong>PostgreSQL</strong> (async SQLAlchemy + <code>asyncpg</code>). Redis, MS SQL Server, and DynamoDB are deferred to v1.2+ via the <code>StorageBackend</code> SPI.
+          </p>
+        </div>
+        <div class="card">
+          <div class="card-title"><span>Rolling-Deploy Upcasters</span><span class="badge badge-violet">AD-9</span></div>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5;">
+            <code>SessionCheckpoint</code> carries a mandatory <code>schema_version: int</code> and CAS <code>revision_id: int</code>, running pure <code>SchemaUpcaster</code> migrations on load so active sessions survive deployments.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 3: TWO-PASS, TASKSTACK & ENCLAVE -->
+    <section class="slide" id="slide-2">
+      <div class="slide-header">
+        <div class="slide-kicker">Slide 3 of 6 · AD-2, AD-5, AD-6, AD-10 · Runtime Pipeline &amp; Enclave Adapter</div>
+        <h1 class="slide-title">Two-Pass Turn Loop, TaskStack Digressions &amp; <code>as_tool()</code> Enclave</h1>
+        <p class="slide-lead">
+          Each utterance traverses a three-stage pipeline: fast non-autoregressive extraction (Pass 1), synchronous Python statechart resolution (&le; 5ms), and scoped rendering (Pass 2)—exposed to LangGraph, Semantic Kernel, and AutoGen as a single transactional compliance enclave tool.
+        </p>
+      </div>
+
+      <div class="grid-3">
+        <div class="card">
+          <div class="card-title"><span>1. Pass 1: Fast Extraction</span><span class="badge badge-blue">&lt; 100ms Budget</span></div>
+          <ul class="feature-list">
+            <li><strong>System-1 ONNX / ModernBERT:</strong> Local CPU/GPU inference offloaded via <code>asyncio.to_thread</code> achieves p95 <code>&le; 50ms</code> (with <code>tokenizers</code>).</li>
+            <li><strong>Scoped &Delta; Target:</strong> Pass 1 receives only the unhydrated leaf paths (<code>&Delta; = Required \ Hydrated</code>) of the active <code>PartialSlotModel</code>.</li>
+            <li><strong>Refusal Short-Circuit (<code>FR-3</code>):</strong> Upstream safety refusals route immediately to <code>on_refusal</code> without burning ordinary retries.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="card-title"><span>2. Core Engine &amp; TaskStack</span><span class="badge badge-emerald">&le; 5ms Pure Python</span></div>
+          <ul class="feature-list">
+            <li><strong>Recursive <code>PartialSlotModel</code> (<code>AD-5</code>):</strong> Nested Pydantic models validate supplied fields per turn and lock valid leaf paths in <code>TaskFrame.locked_slots</code>.</li>
+            <li><strong>Pushdown Digressions (<code>FR-8/9</code>):</strong> Off-topic allowed intents push a child <code>TaskFrame</code> (max depth <code>6</code>) with read-only parent slot isolation (<code>allow_slot_overrides=False</code>).</li>
+            <li><strong>Fail-Safe Counter-Metric (<code>SM-C1</code>):</strong> Unmapped intents trigger deterministic clarification or escalation—never probabilistic guessing.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="card-title"><span>3. Outer Enclave Entrypoint</span><span class="badge badge-violet">AD-10 · as_tool()</span></div>
+          <ul class="feature-list">
+            <li><strong>Defeating the Enterprise Island Trap:</strong> Keep existing LangGraph / Semantic Kernel / AutoGen conversational routers intact.</li>
+            <li><strong>Transactional Enclave Tool:</strong> Bind any verified Blockstate statechart as a single tool via <code>from blockstate.adapters.langchain import as_tool</code>.</li>
+            <li><strong>Typed Wire Union:</strong> Returns <code>BlockstateTurnYield</code>, <code>BlockstateTurnAborted</code>, or <code>BlockstateTurnComplete[T]</code>.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title"><span>TaskStack Pushdown Automata vs Traditional Graph Edges</span><span class="badge badge-emerald">O(N + M) vs O(N &times; M)</span></div>
+          <pre>
+Turn 1 [Stage: intake_claim]   User supplies policy_number="POL-884120", city="Manchester"
+                               ├─► Locked Leaf Paths: {policy_number, location.city}
+                               └─► Remaining Delta (&Delta;): {location.street, location.postcode, estimated_damage_gbp}
+
+Turn 2 [Digression Classified] User asks: "Wait, will claiming for a bumper hurt my no-claims bonus?"
+                               ├─► TaskStack.push(TaskFrame(stage="ncd_policy_faq", tools=[query_policy_handbook_rag]))
+                               ├─► Parent 'intake_claim' slots frozen in read-only isolation (UnauthorisedMutationError)
+                               └─► FAQ answered -&gt; Transition.pop_frame() pops child frame
+
+Turn 3 [Resume: intake_claim]  User supplies street="Deansgate", postcode="M1 1AG", estimated_damage_gbp=180.0
+                               ├─► &Delta; == &empty; -&gt; Strict MotorClaimSlots instantiated!
+                               └─► Pure Python guard (180.0 &le; 250.0) -&gt; Transition.to("tier_auto_payout")</pre>
+        </div>
+        <div class="card">
+          <div class="card-title"><span>LangGraph Transactional Compliance Enclave Integration</span><span class="badge badge-blue">AD-10 · AD-11</span></div>
+          <pre>
+from blockstate.adapters.langchain import as_tool
+from my_regulated_workflows import MortgageOriginationEnclave
+
+# Expose the entire formal statechart as a single validated tool to LangGraph
+langgraph_agent.bind_tools([
+    as_tool(MortgageOriginationEnclave, name="execute_mortgage_transaction")
+])
+
+# High-level orchestrator handles open-ended Q&amp;A; the moment regulated data
+# or money moves, execution enters the deterministic Blockstate enclave.</pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 4: AST DOMINATOR PROOFS & DCG -->
+    <section class="slide" id="slide-3">
+      <div class="slide-header">
+        <div class="slide-kicker">Slide 4 of 6 · AD-4 · Declarative Control Grammar (DCG) &amp; Lengauer-Tarjan Dominator Verification</div>
+        <h1 class="slide-title">Defeating Rice's Theorem: DCG AST Verification (<code>blockstate verify</code>)</h1>
+        <p class="slide-lead">
+          By <strong>Rice's Theorem</strong>, semantic properties of arbitrary Turing-complete Python code (such as <code>getattr(self, dynamic_state)()</code>) are undecidable. <code>blockstate.compiler</code> enforces the <strong>Declarative Control Grammar (DCG)</strong>—restricting topology to <code>@Stage</code>, <code>@Transition</code>, and <code>@Guard</code> decorators with static state references—and proves Lengauer-Tarjan dominators in <code>&lt; 50ms</code>.
+        </p>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title"><span>Compliant Topology: Dominance Proven</span><span class="badge badge-emerald">Exit Code 0</span></div>
+          <div class="svg-container" style="margin-bottom: 0.75rem; padding: 0.75rem;">
+            <svg width="460" height="230" viewBox="0 0 460 230" xmlns="http://www.w3.org/2000/svg">
+              <rect x="155" y="10" width="150" height="36" rx="6" fill="#1e293b" stroke="#38bdf8" />
+              <text x="230" y="33" text-anchor="middle" fill="#f8fafc" font-family="monospace" font-size="11">select_payment_rail</text>
+
+              <line x1="230" y1="46" x2="230" y2="78" stroke="#34d399" stroke-width="2" />
+
+              <rect x="145" y="78" width="170" height="40" rx="6" fill="#064e3b" stroke="#34d399" stroke-width="2" />
+              <text x="230" y="102" text-anchor="middle" fill="#34d399" font-family="monospace" font-size="12" font-weight="bold">step_up_mfa_kyc (DOM)</text>
+
+              <line x1="185" y1="118" x2="80" y2="165" stroke="#34d399" stroke-width="2" />
+              <line x1="230" y1="118" x2="230" y2="165" stroke="#34d399" stroke-width="2" />
+              <line x1="275" y1="118" x2="380" y2="165" stroke="#34d399" stroke-width="2" />
+
+              <rect x="15" y="165" width="130" height="36" rx="6" fill="#1e293b" stroke="#475569" />
+              <text x="80" y="188" text-anchor="middle" fill="#cbd5e1" font-family="monospace" font-size="10">faster_payments_uk</text>
+
+              <rect x="165" y="165" width="130" height="36" rx="6" fill="#1e293b" stroke="#475569" />
+              <text x="230" y="188" text-anchor="middle" fill="#cbd5e1" font-family="monospace" font-size="10">sepa_euro_transfer</text>
+
+              <rect x="315" y="165" width="130" height="36" rx="6" fill="#1e293b" stroke="#475569" />
+              <text x="380" y="188" text-anchor="middle" fill="#cbd5e1" font-family="monospace" font-size="10">swift_international</text>
+            </svg>
+          </div>
+          <p style="color: var(--text-secondary); font-size: 0.88rem;">
+            Every path from entry to any disbursement rail passes through <code>step_up_mfa_kyc</code>. Compiler emits a signed Markdown/JSON MRM audit certificate.
+          </p>
+        </div>
+
+        <div class="card">
+          <div class="card-title"><span>PR Bypass Violation: Blocked in CI</span><span class="badge badge-rose">Exit Code 1 (BLK-AST-002)</span></div>
+          <div class="svg-container" style="margin-bottom: 0.75rem; padding: 0.75rem;">
+            <svg width="460" height="230" viewBox="0 0 460 230" xmlns="http://www.w3.org/2000/svg">
+              <rect x="155" y="10" width="150" height="36" rx="6" fill="#1e293b" stroke="#38bdf8" />
+              <text x="230" y="33" text-anchor="middle" fill="#f8fafc" font-family="monospace" font-size="11">select_payment_rail</text>
+
+              <line x1="230" y1="46" x2="230" y2="78" stroke="#64748b" stroke-width="2" />
+              <!-- Illegal Bypass Edge -->
+              <path d="M 155 28 Q 45 45 70 165" fill="none" stroke="#fb7185" stroke-width="3" stroke-dasharray="6,4" />
+              <text x="58" y="95" fill="#fb7185" font-family="monospace" font-size="10" font-weight="bold">VIP Bypass (&lt;£10)</text>
+
+              <rect x="145" y="78" width="170" height="40" rx="6" fill="#1e293b" stroke="#64748b" />
+              <text x="230" y="102" text-anchor="middle" fill="#cbd5e1" font-family="monospace" font-size="12">step_up_mfa_kyc</text>
+
+              <line x1="185" y1="118" x2="95" y2="165" stroke="#64748b" stroke-width="1.5" />
+              <line x1="230" y1="118" x2="230" y2="165" stroke="#64748b" stroke-width="1.5" />
+              <line x1="275" y1="118" x2="380" y2="165" stroke="#64748b" stroke-width="1.5" />
+
+              <rect x="15" y="165" width="130" height="36" rx="6" fill="#4c0519" stroke="#fb7185" stroke-width="2" />
+              <text x="80" y="188" text-anchor="middle" fill="#fb7185" font-family="monospace" font-size="10" font-weight="bold">faster_payments_uk</text>
+
+              <rect x="165" y="165" width="130" height="36" rx="6" fill="#1e293b" stroke="#475569" />
+              <text x="230" y="188" text-anchor="middle" fill="#cbd5e1" font-family="monospace" font-size="10">sepa_euro_transfer</text>
+
+              <rect x="315" y="165" width="130" height="36" rx="6" fill="#1e293b" stroke="#475569" />
+              <text x="380" y="188" text-anchor="middle" fill="#cbd5e1" font-family="monospace" font-size="10">swift_international</text>
+            </svg>
+          </div>
+          <p style="color: var(--text-secondary); font-size: 0.88rem;">
+            Immediate dominator of <code>faster_payments_uk</code> shifts to <code>select_payment_rail</code>. Compiler prints exact counter-example path and file:line numbers.
+          </p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span>Declarative Control Grammar (DCG) Static Reflection Rejection</span><span class="badge badge-rose">[Blockstate E014]</span></div>
+        <pre>
+$ blockstate check mortgage_flow.py
+[Blockstate E014] Dynamic transition destination detected at mortgage_flow.py:42.
+Transitions must reference static State definitions to enable Lengauer-Tarjan dominator verification.</pre>
+      </div>
+    </section>
+
+    <!-- SLIDE 5: ZERO-TRUST & PIIVAULT -->
+    <section class="slide" id="slide-4">
+      <div class="slide-header">
+        <div class="slide-kicker">Slide 5 of 6 · AD-3, AD-7, AD-8, AD-13 · Security &amp; Audit Provenance</div>
+        <h1 class="slide-title">Zero-Trust Tool Isolation, <code>PIIVault</code> &amp; Tamper-Evident <code>TurnLedger</code></h1>
+        <p class="slide-lead">
+          Sensitive customer data is stripped at the outermost ingress boundary before Pass 1, encrypted at rest with AES-256-GCM, and detokenised solely inside whitelisted tool handlers requesting <code>Detokenise[T]</code>.
+        </p>
+      </div>
+
+      <div class="grid-3">
+        <div class="card">
+          <div class="card-title"><span>Physical Tool Gating</span><span class="badge badge-rose">AD-3 · BLK-SEC-001</span></div>
+          <ul class="feature-list">
+            <li><strong>No Global Tool Registry:</strong> Tools are bound exclusively to <code>@Stage(tools=[...])</code> definitions.</li>
+            <li><strong>Frozen <code>MappingProxyType</code>:</strong> Rebuilt fresh on every turn for the active stage on top of <code>TaskStack</code>.</li>
+            <li><strong>Least-Privilege Injection:</strong> Tool functions receive only explicitly declared <code>RunContext[Deps]</code> dependencies.</li>
+            <li><strong>Instant Lockout:</strong> Hallucinated or injected tool calls raise <code>SecurityViolationError</code>, log to <code>TurnLedger</code>, and transition to lockout.</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <div class="card-title"><span>PIIVault &amp; Detokenise[T]</span><span class="badge badge-blue">AD-7 · AES-256-GCM</span></div>
+          <ul class="feature-list">
+            <li><strong>Ingress Tokenisation:</strong> Replaces NINo, NHS numbers, SSNs, postcodes, cards, emails, and phones with HMAC tokens (<code>&lt;VAULT:POSTCODE_01&gt;</code>).</li>
+            <li><strong>Encrypted Vault Map:</strong> Cleartext mappings live only in <code>SessionCheckpoint.vault_map</code> encrypted via AES-256-GCM with AAD binding and key-rotation support.</li>
+            <li><strong>Zero Exception Leakage:</strong> Pydantic <code>ValidationError</code> reprs are scrubbed so raw invalid PII never appears in logs or traces.</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <div class="card-title"><span>SHA-256 TurnLedger &amp; WAL</span><span class="badge badge-emerald">AD-8 · EU AI Act Art. 12</span></div>
+          <ul class="feature-list">
+            <li><strong>Synchronous Chain Commit:</strong> Computes <code>SHA256(RFC8785_JCS(prev_hash, prompt_hash, vaulted_input_hash, vaulted_output_hash, exposed_tools, ...))</code> before releasing session lease.</li>
+            <li><strong>Session-Partitioned Buffer:</strong> Preserves monotonic causal turn ordering across distributed workers.</li>
+            <li><strong>10s <code>SIGTERM</code> WAL Drain:</strong> Spills un-flushed records to <code>.blockstate/wal/ledger.wal</code> on shutdown or sink backpressure.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span>Zero-Leakage Git Hooks &amp; SecretStr Environment Boundary (AD-13)</span><span class="badge badge-amber">Pre-Commit &amp; Pre-Push Enforced</span></div>
+        <table>
+          <thead>
+            <tr>
+              <th>Protection Layer</th>
+              <th>Mechanism / Tool</th>
+              <th>What It Blocks</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>1. Cryptographic Secret Scan</strong></td>
+              <td><code>gitleaks v8.30.1</code> + <code>detect-secrets v1.5.0</code></td>
+              <td>API keys (OpenAI, Anthropic, AWS), private keys, high-entropy JWTs, and database passwords in staged diffs &amp; history.</td>
+            </tr>
+            <tr>
+              <td><strong>2. Staged PII Pattern Guard</strong></td>
+              <td><code>blockstate-pii-guard</code> (pre-commit hook)</td>
+              <td>Accidental commits containing UK NINo, NHS numbers, US SSNs, Luhn-valid payment cards, or Bearer tokens in code/tests.</td>
+            </tr>
+            <tr>
+              <td><strong>3. Sensitive Artifact Blocker</strong></td>
+              <td><code>.gitignore</code> + <code>block-dotenv-and-trace-artifacts</code></td>
+              <td>Blocks staging of any <code>.env*</code> (except <code>.env.example</code>), <code>.blockstate/</code> trace folders, <code>*.wal</code>, <code>*.db</code>, <code>*.pem</code>, and <code>*.key</code>.</td>
+            </tr>
+            <tr>
+              <td><strong>4. Runtime Secret Masking</strong></td>
+              <td><code>BlockstateSettings(BaseSettings)</code> + <code>SecretStr</code></td>
+              <td>Wraps all <code>BLOCKSTATE_</code> DSNs, API keys, and vault keys in <code>pydantic.SecretStr</code> so stack traces and logs print <code>**********</code>.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SLIDE 6: TESTING, LICENCES & HOOKS -->
+    <section class="slide" id="slide-5">
+      <div class="slide-header">
+        <div class="slide-kicker">Slide 6 of 6 · AD-11 &amp; AD-12 · Quality Assurance &amp; Supply-Chain Governance</div>
+        <h1 class="slide-title">Enforced Multi-Tier Coverage, Port Contract Suites &amp; Audited Licences</h1>
+        <p class="slide-lead">
+          Pragmatic, high-water-mark unit and branch coverage paired with reusable Port Contract Suites and Hypothesis property fuzzing guarantees zero adapter integration drift across the v1 <code>StorageBackend</code> SPI and 100% permissive subcomponent licensing.
+        </p>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title"><span>Three-Tier Testing &amp; Contract Matrix (AD-11)</span><span class="badge badge-emerald">CI Hard Gate</span></div>
+          <table>
+            <thead>
+              <tr>
+                <th>Verification Layer</th>
+                <th>Scope &amp; Target</th>
+                <th>Enforced Threshold / Contract</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Tier 1: Kernel Unit &amp; Boundary</strong></td>
+                <td><code>core</code>, <code>compiler</code>, <code>security</code></td>
+                <td><strong>&ge; 95% Line / &ge; 90% Branch Coverage</strong> (empty strings, 64KB payloads, depth=8 nesting, <code>[Blockstate E014]</code> DCG checks, Unicode RTL/null bytes).</td>
+              </tr>
+              <tr>
+                <td><strong>Tier 2: Repository Coverage</strong></td>
+                <td>All packages incl. <code>adapters</code> &amp; <code>cli</code></td>
+                <td><strong>&ge; 90% Line / &ge; 85% Branch Coverage</strong> via <code>pytest --cov=blockstate --cov-branch</code>.</td>
+              </tr>
+              <tr>
+                <td><strong>Port &amp; Enclave Contract Suites</strong></td>
+                <td><code>StorageBackend</code> SPI, <code>LedgerSink</code>, <code>PIIStripper</code>, <code>IntentClassifier</code>, <code>ResponseRenderer</code>, <code>as_tool()</code></td>
+                <td>Every v1 storage adapter (In-Memory, SQLite WAL, PostgreSQL) subclasses and passes 100% of <code>StorageBackendContractSuite</code> on every PR.</td>
+              </tr>
+              <tr>
+                <td><strong>Property-Based Fuzzing</strong></td>
+                <td><code>Hypothesis v6.170+</code> (500 examples/prop)</td>
+                <td>Fuzzes recursive <code>PartialSlotModel</code> hydration, DCG AST constraints, and Lengauer-Tarjan dominators against brute-force graph paths.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card">
+          <div class="card-title"><span>Audited Subcomponent Licence Manifest (AD-12)</span><span class="badge badge-blue">Zero Copyleft</span></div>
+          <table>
+            <thead>
+              <tr>
+                <th>Subcomponent</th>
+                <th>Pinned Version</th>
+                <th>SPDX Licence</th>
+                <th>Scope</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>python</code> (CPython Stdlib)</td>
+                <td><code>&gt;=3.12,&lt;3.15</code></td>
+                <td><code>PSF-2.0</code></td>
+                <td>Core Runtime</td>
+              </tr>
+              <tr>
+                <td><code>pydantic</code> &amp; <code>pydantic-settings</code></td>
+                <td><code>&gt;=2.14.1</code> / <code>&gt;=2.16.1</code></td>
+                <td><code>MIT</code></td>
+                <td>Core Runtime</td>
+              </tr>
+              <tr>
+                <td><code>cryptography</code></td>
+                <td><code>&gt;=50.0.2,&lt;51.0</code></td>
+                <td><code>Apache-2.0 / BSD-3</code></td>
+                <td>Core Security</td>
+              </tr>
+              <tr>
+                <td><code>typer</code> &amp; <code>rich</code></td>
+                <td><code>&gt;=0.27.3</code> / <code>&gt;=15.0.0</code></td>
+                <td><code>MIT</code></td>
+                <td>Core CLI</td>
+              </tr>
+              <tr>
+                <td><code>pydantic-ai-slim</code> / <code>litellm</code></td>
+                <td><code>&gt;=2.61.0</code> / <code>&gt;=1.106.0,&lt;1.107.0</code></td>
+                <td><code>MIT</code></td>
+                <td>Extra: <code>models</code> / <code>litellm</code></td>
+              </tr>
+              <tr>
+                <td><code>onnxruntime</code> &amp; <code>tokenizers</code></td>
+                <td><code>&gt;=1.31.0</code> / <code>&gt;=0.23.0</code></td>
+                <td><code>MIT</code> / <code>Apache-2.0</code></td>
+                <td>Extra: <code>onnx</code> (<code>local</code>)</td>
+              </tr>
+              <tr>
+                <td><code>SQLAlchemy</code> &amp; <code>aiosqlite</code></td>
+                <td><code>&gt;=2.1.6</code> / <code>&gt;=0.22.1</code></td>
+                <td><code>MIT</code></td>
+                <td>v1 <code>StorageBackend</code> Extras: <code>sql</code>, <code>sqlite</code> (WAL)</td>
+              </tr>
+              <tr>
+                <td><code>asyncpg</code>, <code>aioboto3</code>, <code>opentelemetry-sdk</code></td>
+                <td><code>&gt;=0.32.0</code> / <code>&gt;=15.5.0</code> / <code>&gt;=1.45.1</code></td>
+                <td><code>Apache-2.0</code></td>
+                <td>Extras: <code>postgres</code>, <code>s3</code>, <code>otel</code></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div>
+      <strong>Blockstate (<code>blockstate</code>)</strong> · Architecture Spine Deliverable · Use <code>&larr;</code> / <code>&rarr;</code> arrow keys or top pills to navigate
+    </div>
+    <div class="footer-controls">
+      <button class="btn" onclick="prevSlide()">&larr; Previous</button>
+      <button class="btn" onclick="nextSlide()">Next &rarr;</button>
+    </div>
+  </footer>
+
+  <script>
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.slide');
+    const pills = document.querySelectorAll('.nav-pill');
+
+    function showSlide(index) {
+      if (index < 0) index = slides.length - 1;
+      if (index >= slides.length) index = 0;
+      currentSlide = index;
+      slides.forEach((s, i) => s.classList.toggle('active', i === currentSlide));
+      pills.forEach((p, i) => p.classList.toggle('active', i === currentSlide));
+    }
+
+    function nextSlide() { showSlide(currentSlide + 1); }
+    function prevSlide() { showSlide(currentSlide - 1); }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') nextSlide();
+      if (e.key === 'ArrowLeft') prevSlide();
+    });
+  </script>
+</body>
+</html>

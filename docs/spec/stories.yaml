@@ -1,0 +1,170 @@
+- id: "1"
+  title: Project Scaffolding, StorageBackend SPI, Error Taxonomy & Zero-Leakage Gates
+  description: >-
+    Establish the PEP 621 pyproject.toml (package blockstate, src/blockstate/...)
+    with optional extras, import-linter hexagonal boundary contracts,
+    BlockstateSettings (BLOCKSTATE_ prefix, SecretStr), BlockstateError (BLK-*
+    codes and [Blockstate E014]), the formal async StorageBackend SPI
+    (src/blockstate/ports/storage.py), and all blockstate.ports typing.Protocol
+    interfaces and frozen wire DTOs (BlockstateTurnYield, BlockstateTurnAborted,
+    BlockstateTurnComplete[T]) (CAP-18, CAP-20, CAP-24, AD-1, AD-12, AD-13, AD-14
+    in SPEC.md). Configure pre-commit and CI security, PII, and permissive licence
+    gates (gitleaks, detect-secrets, blockstate-pii-guard, pip-licenses, cyclonedx-py).
+  spec_checkpoint: false
+  done_checkpoint: false
+  invoke_dev_with: >-
+    Follow strict TDD (Red-Green-Refactor) and British English spelling throughout.
+    Verify uv run ruff check, mypy --strict, pyright, import-linter, and pytest
+    with >=95% line and >=90% branch coverage on core/compiler/security modules
+    before completing the story.
+- id: "2"
+  title: Cryptographic PIIVault Boundary, AES-256-GCM AAD Cipher & PIIStripperContractSuite
+  description: >-
+    Implement blockstate.security.vault (PIIVault.sanitise() with deterministic
+    HMAC-SHA256 <VAULT:CATEGORY_NN> session tokens, built-in UK/US PII regex and
+    checksum detectors, and AES-256-GCM encryption bound to
+    AAD = "<session_id>:<schema_version>:<revision_id>") plus Vaulted[T] and
+    Detokenise[T] type annotations (CAP-15, AD-7 in SPEC.md). Build and pass
+    100% of PIIStripperContractSuite in blockstate.testing.contracts (CAP-23).
+  spec_checkpoint: false
+  done_checkpoint: false
+  invoke_dev_with: >-
+    Follow strict TDD and British English spelling (sanitise, tokenise, detokenise).
+    Ensure zero external SDK imports in blockstate.security (stdlib, pydantic, and
+    cryptography only) and verify >=95% line and >=90% branch coverage via pytest-cov.
+- id: "3"
+  title: Recursive PartialSlotModel Metaclass, Leaf-Path Delta-Hydration & Property Fuzzing
+  description: >-
+    Implement PartialSlotMetaclass (max_nesting_depth=8, UNSET sentinel),
+    SlotHydrator leaf-path Delta-Hydration, TaskFrame.locked_slots immutability,
+    isolated Vaulted[T] validator detokenisation, sanitised FieldValidationError
+    short-circuiting (include_input=False), and on_breach early routing (CAP-6,
+    CAP-7, AD-5 in SPEC.md). Validate invariants with Hypothesis recursive schema
+    fuzzing across >=500 examples (CAP-23, AD-11).
+  spec_checkpoint: false
+  done_checkpoint: false
+  invoke_dev_with: >-
+    Follow strict TDD and British English spelling. Ensure ValidationError never
+    leaks raw rejected inputs (include_input=False, include_context=False) and
+    verify >=95% line and >=90% branch coverage on blockstate.core.slots alongside
+    500+ Hypothesis examples.
+- id: "4"
+  title: Declarative Control Grammar (@Stage/@Transition/@Guard), TaskStack & ToolGatekeeper
+  description: >-
+    Implement Agent and the Declarative Control Grammar (@Stage, @Transition, @Guard)
+    registration (DuplicateStageError BLK-CFG-001, ConfigurationError BLK-CFG-002),
+    Transition[T] and ChoicePayload primitives, two-tier Global SessionState vs
+    TaskFrameState isolation (ReadOnlySessionView), TaskStack push/pop
+    (max_stack_depth=6, allow_slot_overrides), and ToolGatekeeper ephemeral
+    MappingProxyType dispatch tables with RunContext[Deps] and Detokenise[T]
+    (CAP-1, CAP-2, CAP-4, CAP-5, CAP-8, CAP-9, CAP-22 in SPEC.md). Enforce
+    SecurityViolationError (BLK-SEC-001) and UnauthorisedMutationError (BLK-SEC-002).
+  spec_checkpoint: false
+  done_checkpoint: false
+  invoke_dev_with: >-
+    Follow strict TDD and British English spelling. Ensure no global callable tool
+    registry exists anywhere in runtime memory and verify >=95% line and >=90%
+    branch coverage across blockstate.core.agent, stack, gatekeeper, and transitions.
+- id: "5"
+  title: Two-Pass StatechartEngine Turn Loop, SHA-256 TurnLedger & In-Memory Reference Adapters
+  description: >-
+    Implement StatechartEngine orchestrating lease acquisition, ingress
+    PIIVault.sanitise(), Pass 1 extraction (<100ms timeout, on_refusal circuit
+    breaker), core Step 2a/2b/2c resolution (<=5ms overhead, max_turns enforcement),
+    Pass 2 template/ChoicePayload/model rendering, and synchronous RFC 8785 JCS
+    SHA-256 TurnLedgerRecord chaining inside commit_turn() (CAP-3, CAP-13, CAP-14,
+    CAP-16 in SPEC.md). Include InMemoryStateStore implementing the StorageBackend
+    SPI and reference port test doubles.
+  spec_checkpoint: false
+  done_checkpoint: false
+  invoke_dev_with: >-
+    Follow strict TDD and British English spelling. Verify single-owner state
+    mutation exclusively in StatechartEngine.commit_turn(), popped digression
+    frames after Pass 2 render, <=5ms core step overhead, and >=95% line / >=90%
+    branch coverage on blockstate.core.engine.
+- id: "6"
+  title: Static DCG AST Graph Compiler ([Blockstate E014]), Lengauer-Tarjan Proofs & Exporters
+  description: >-
+    Implement blockstate.compiler offline Python ast.parse graph extractor over the
+    Declarative Control Grammar (@Stage, @Transition, @Guard, <50ms for up to 500
+    nodes, terminating compilation with [Blockstate E014] when dynamic transition
+    destinations or reflection such as getattr(self, dynamic_state)() are detected,
+    rejecting @field_validator transitions, flagging dead stages BLK-AST-002, and
+    verifying pushdown call-return digression sub-graphs), Lengauer-Tarjan
+    multi-branch dominator solver, and Mermaid/JSON exporters (CAP-10, CAP-11,
+    CAP-12 in SPEC.md). Verify Lengauer-Tarjan equivalence against brute-force path
+    enumeration via Hypothesis (>=500 examples, CAP-23).
+  spec_checkpoint: false
+  done_checkpoint: false
+  invoke_dev_with: >-
+    Follow strict TDD and British English spelling. Never execute user code during
+    AST inspection; verify [Blockstate E014] diagnostic output on dynamic transition
+    targets, <50ms compilation on 500-node synthetic graphs, 500+ Hypothesis graph
+    equivalence examples, and >=95% line / >=90% branch coverage on blockstate.compiler.
+- id: "7"
+  title: v1 StorageBackend SPI Adapters (In-Memory, SQLite WAL, PostgreSQL) & ContractSuite
+  description: >-
+    Implement distributed session leasing (2000ms fail-fast BLK-CON-409, 30000ms
+    TTL, 10000ms background heartbeat), optimistic CAS (revision_id), and
+    SchemaUpcaster migrations across the three canonical v1 StorageBackend SPI
+    (src/blockstate/ports/storage.py) backends: InMemoryStateStore, SQLiteStateStore
+    (PRAGMA journal_mode=WAL via aiosqlite at .blockstate/state.db), and
+    PostgresStateStore (SQLAlchemy[asyncio] + asyncpg), deferring Redis, Microsoft
+    SQL Server, and AWS DynamoDB to v1.2+ (CAP-18, CAP-19, AD-9 in SPEC.md). Build
+    and pass 100% of StateStoreContractSuite across all three v1 storage backends
+    (CAP-23, AD-11).
+  spec_checkpoint: false
+  done_checkpoint: false
+  invoke_dev_with: >-
+    Follow strict TDD and British English spelling. Gate SQLite (aiosqlite) and
+    PostgreSQL (SQLAlchemy[asyncio] + asyncpg) drivers behind PEP 621 optional
+    extras in blockstate.adapters.store, verify import-linter core isolation, and
+    pass 100% of StateStoreContractSuite with >=90% line and >=85% branch coverage.
+- id: "8"
+  title: Async Session-Partitioned TurnLedger Ring Buffer, WAL Drain & LedgerSinkContractSuite
+  description: >-
+    Implement the session_id-partitioned async TurnLedger ring buffer with
+    transactional SessionCheckpoint.pending_ledger_outbox acknowledgement, 10-second
+    SIGTERM/SIGINT local WAL drain (.blockstate/wal/ledger.wal), and FileLedgerSink,
+    PostgresLedgerSink, and S3LedgerSink drivers (CAP-16, CAP-17, AD-8 in SPEC.md).
+    Build and pass 100% of LedgerSinkContractSuite across all ledger sinks (CAP-23, AD-11).
+  spec_checkpoint: false
+  done_checkpoint: false
+  invoke_dev_with: >-
+    Follow strict TDD and British English spelling. Verify monotonic per-session
+    causal ordering, SHA-256 hash-chain preservation under concurrent workers,
+    zero record loss on simulated SIGTERM/SIGKILL, and 100% pass on
+    LedgerSinkContractSuite.
+- id: "9"
+  title: Pass 1 & Pass 2 Model Adapters (ONNX System-1, PydanticAI, LiteLLM) & Model Contract Suites
+  description: >-
+    Implement ONNXIntentClassifier (asyncio.to_thread, <=50ms p95),
+    PydanticAIAdapter, and LiteLLMAdapter (pinned <1.107.0) supporting Pass 1
+    structured Delta-schema extraction and Pass 2 stage-scoped tool and response
+    rendering (CAP-13, CAP-14, AD-1, AD-6 in SPEC.md). Build and pass 100% of
+    IntentClassifierContractSuite and ResponseRendererContractSuite (CAP-23, AD-11).
+  spec_checkpoint: false
+  done_checkpoint: false
+  invoke_dev_with: >-
+    Follow strict TDD and British English spelling. Verify outbound tool schemas
+    physically omit unwhitelisted stage tools, fail-closed handling on unmapped
+    utterances or model refusals, import-linter isolation, and 100% pass on both
+    model ContractSuites.
+- id: "10"
+  title: CLI Surface (blockstate), OpenTelemetry GenAI 1.30, Enclave Adapter (as_tool) & Examples
+  description: >-
+    Implement the Typer/Rich blockstate CLI (check, verify, trace, export),
+    OpenTelemetry GenAI 1.30 span emitter and .blockstate/traces.jsonl replay engine,
+    and outer orchestrator enclave adapter (from blockstate.adapters.langchain import
+    as_tool, Agent.as_tool(), and Agent.run_as_subflow() yielding BlockstateTurnYield,
+    BlockstateTurnAborted, or BlockstateTurnComplete[T]) (CAP-20, CAP-21, AD-10,
+    AD-14 in SPEC.md). Deliver the four runnable domain reference agents in examples/
+    and pass full-repository quality, licence, and coverage gates (CAP-24, AD-11, AD-12).
+  spec_checkpoint: false
+  done_checkpoint: true
+  invoke_dev_with: >-
+    Follow strict TDD and British English spelling. Verify all blockstate CLI commands
+    (check, verify, trace, export), LangGraph as_tool() enclave binding, all four
+    examples/ scripts, mypy --strict, pyright, ruff, import-linter, pip-licenses, and
+    full-repo pytest coverage (>=95% line / >=90% branch on core/compiler/security;
+    >=90% line / >=85% branch overall).
