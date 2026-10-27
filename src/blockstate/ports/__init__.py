@@ -9,10 +9,13 @@ from blockstate.ports.models import ExtractionResult, IntentClassifier, Response
 from blockstate.ports.security import PIIStripper, SanitisedPayload
 from blockstate.ports.storage import (
     LeaseHandle,
+    SchemaUpcaster,
     SessionCheckpoint,
+    SessionLeaseHeartbeat,
     StateStore,
     StorageBackend,
     TurnEnvelope,
+    upcast_checkpoint_payload,
 )
 from blockstate.ports.wire import (
     BlockstateTurnAborted,
@@ -31,9 +34,12 @@ __all__ = [
     "PIIStripper",
     "ResponseRenderer",
     "SanitisedPayload",
+    "SchemaUpcaster",
     "SessionCheckpoint",
+    "SessionLeaseHeartbeat",
     "StateStore",
     "StorageBackend",
     "TurnEnvelope",
     "TurnLedgerRecord",
+    "upcast_checkpoint_payload",
 ]

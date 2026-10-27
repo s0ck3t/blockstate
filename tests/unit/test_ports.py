@@ -60,6 +60,9 @@ class DummyStorageBackend:
     ) -> None:
         pass
 
+    async def close(self) -> None:
+        pass
+
 
 class IncompleteStorageBackend:
     """Mock storage backend intentionally lacking acquire_lease method."""

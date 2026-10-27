@@ -36,9 +36,11 @@ sqlite = [
 postgres = [
     "asyncpg>=0.32.0,<1.0",
     "sqlalchemy>=2.1.6,<3.0",
+    "greenlet>=3.0.0",
 ]
 sql = [
     "sqlalchemy>=2.1.6,<3.0",
+    "greenlet>=3.0.0",
 ]
 s3 = [
     "aiobotocore>=3.0.0",
@@ -55,6 +57,7 @@ onnx = [
 ]
 local = [
     "blockstate[onnx]",
+    "blockstate[sqlite]",
 ]
 system1 = [
     "blockstate[onnx]",

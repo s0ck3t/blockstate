@@ -1,16 +1,34 @@
 """Reusable contract test suites for verifying port protocol implementations.
 
-Provides PIIStripperContractSuite for verifying that any PIIStripper protocol
-adapter adheres strictly to zero-leakage boundaries, deterministic session
-tokenisation, mathematical checksums, and edge-case invariants.
+Provides:
+- PIIStripperContractSuite: verifies zero-leakage, tokenisation, and checksums.
+- StateStoreContractSuite: verifies StorageBackend SPI implementations across leasing,
+  optimistic CAS concurrency, SchemaUpcaster migrations, and boundary payloads.
 """
 
 import abc
+import asyncio
+import inspect
+import time
+from collections.abc import Mapping
 from typing import Any
 
 import pytest
 
+from blockstate.errors import (
+    ConcurrentSessionError,
+    LeaseTimeoutError,
+    OptimisticLockError,
+    StorageError,
+)
 from blockstate.ports.security import PIIStripper
+from blockstate.ports.storage import (
+    LeaseHandle,
+    SchemaUpcaster,
+    SessionCheckpoint,
+    SessionLeaseHeartbeat,
+    StorageBackend,
+)
 
 
 class PIIStripperContractSuite(abc.ABC):
@@ -290,3 +308,481 @@ class PIIStripperContractSuite(abc.ABC):
         contacts = sanitised["contacts"]
         assert contacts[0] == "<VAULT:EMAIL_01>"
         assert contacts[1]["emergency_email"] == "<VAULT:EMAIL_02>"
+
+
+class StateStoreContractSuite(abc.ABC):
+    """Reusable contract test suite for StorageBackend protocol implementations.
+
+    Subclasses must implement create_backend() returning an initialised instance
+    of the StorageBackend under test.
+    Pytest will execute all tests in this suite against that adapter.
+    """
+
+    # Do not collect base contract class directly as a test
+    __test__ = False
+
+    @abc.abstractmethod
+    def create_backend(
+        self,
+        upcasters: Mapping[int, SchemaUpcaster] | None = None,
+        target_schema_version: int | None = None,
+    ) -> Any:
+        """Create and return an initialised instance of the StorageBackend under test."""
+        ...
+
+    async def _get_backend(
+        self,
+        upcasters: Mapping[int, SchemaUpcaster] | None = None,
+        target_schema_version: int | None = None,
+    ) -> StorageBackend:
+        """Helper to resolve sync or async create_backend call."""
+        res = self.create_backend(
+            upcasters=upcasters,
+            target_schema_version=target_schema_version,
+        )
+        if inspect.isawaitable(res):
+            resolved = await res
+            return resolved  # type: ignore[no-any-return]
+        return res  # type: ignore[no-any-return]
+
+    async def _close_backend(self, backend: StorageBackend) -> None:
+        """Helper to gracefully close storage backends."""
+        if hasattr(backend, "close") and callable(backend.close):
+            res = backend.close()
+            if inspect.isawaitable(res):
+                await res
+
+    @pytest.mark.asyncio
+    async def test_protocol_conformance(self) -> None:
+        """Verify the instance satisfies runtime StorageBackend protocol check."""
+        backend = await self._get_backend()
+        try:
+            assert isinstance(backend, StorageBackend)
+        finally:
+            await self._close_backend(backend)
+
+    @pytest.mark.asyncio
+    async def test_acquire_and_release_lease(self) -> None:
+        """Verify acquiring and releasing a session lease token."""
+        backend = await self._get_backend()
+        session_id = "test-contract-acquire-release"
+        try:
+            lease = await backend.acquire_lease(session_id, ttl_ms=30000)
+            assert lease.session_id == session_id
+            assert bool(lease.lease_id)
+            assert lease.expires_at_epoch_ms > int(time.time() * 1000)
+            assert lease.fence_token >= 1
+
+            await backend.release_lease(lease)
+
+            # Re-acquire immediately
+            lease2 = await backend.acquire_lease(session_id, ttl_ms=30000)
+            assert lease2.session_id == session_id
+            assert lease2.lease_id != lease.lease_id
+            assert lease2.fence_token > lease.fence_token
+            await backend.release_lease(lease2)
+        finally:
+            await self._close_backend(backend)
+
+    @pytest.mark.asyncio
+    async def test_lease_contention_wait_timeout(self) -> None:
+        """Verify lease contention fails fast after wait_timeout_ms with BLK-CON-409."""
+        backend = await self._get_backend()
+        session_id = "test-contract-contention-timeout"
+        try:
+            lease1 = await backend.acquire_lease(session_id, ttl_ms=10000)
+            assert lease1 is not None
+
+            start = time.monotonic()
+            with pytest.raises(ConcurrentSessionError) as exc_info:
+                await backend.acquire_lease(session_id, ttl_ms=10000, wait_timeout_ms=100)
+            elapsed_ms = (time.monotonic() - start) * 1000
+
+            assert exc_info.value.code == "BLK-CON-409"
+            assert exc_info.value.session_id == session_id
+            assert elapsed_ms >= 80
+
+            await backend.release_lease(lease1)
+        finally:
+            await self._close_backend(backend)
+
+    @pytest.mark.asyncio
+    async def test_lease_contention_released_in_time(self) -> None:
+        """Verify waiting worker acquires lease when existing worker releases within timeout."""
+        backend = await self._get_backend()
+        session_id = "test-contract-contention-released"
+        try:
+            lease1 = await backend.acquire_lease(session_id, ttl_ms=10000)
+
+            async def release_after_delay() -> None:
+                await asyncio.sleep(0.06)
+                await backend.release_lease(lease1)
+
+            release_task = asyncio.create_task(release_after_delay())
+
+            lease2 = await backend.acquire_lease(session_id, ttl_ms=10000, wait_timeout_ms=500)
+            assert lease2.session_id == session_id
+            assert lease2.lease_id != lease1.lease_id
+            await release_task
+            await backend.release_lease(lease2)
+        finally:
+            await self._close_backend(backend)
+
+    @pytest.mark.asyncio
+    async def test_stale_lease_expiration(self) -> None:
+        """Verify expired lease allows immediate acquisition by another worker."""
+        backend = await self._get_backend()
+        session_id = "test-contract-stale-expiration"
+        try:
+            # Acquire with short 50ms TTL
+            lease1 = await backend.acquire_lease(session_id, ttl_ms=50)
+            assert lease1 is not None
+
+            # Wait for TTL expiration
+            await asyncio.sleep(0.08)
+
+            # Next worker acquires cleanly without waiting for timeout
+            lease2 = await backend.acquire_lease(session_id, ttl_ms=10000, wait_timeout_ms=100)
+            assert lease2.session_id == session_id
+            assert lease2.lease_id != lease1.lease_id
+            assert lease2.fence_token > lease1.fence_token
+            await backend.release_lease(lease2)
+        finally:
+            await self._close_backend(backend)
+
+    @pytest.mark.asyncio
+    async def test_lease_heartbeat_renewal(self) -> None:
+        """Verify SessionLeaseHeartbeat context manager extends lease expiration."""
+        backend = await self._get_backend()
+        session_id = "test-contract-heartbeat-renewal"
+        try:
+            lease = await backend.acquire_lease(session_id, ttl_ms=2000)
+            initial_expiry = lease.expires_at_epoch_ms
+
+            async with SessionLeaseHeartbeat(
+                backend,
+                lease,
+                heartbeat_interval_ms=50,
+                ttl_ms=3000,
+            ) as hb:
+                assert hb.session_id == session_id
+                assert hb.lease_id == lease.lease_id
+                await asyncio.sleep(0.12)
+                assert hb.expires_at_epoch_ms > initial_expiry
+
+            await backend.release_lease(hb.lease)
+        finally:
+            await self._close_backend(backend)
+
+    @pytest.mark.asyncio
+    async def test_heartbeat_renewal_on_stolen_or_invalid_lease(self) -> None:
+        """Verify renew_lease on stolen or invalid lease raises LeaseTimeoutError (BLK-STO-003)."""
+        backend = await self._get_backend()
+        session_id = "test-contract-stolen-lease"
+        try:
+            valid_lease = await backend.acquire_lease(session_id, ttl_ms=10000)
+
+            stolen_lease = LeaseHandle(
+                session_id=session_id,
+                lease_id="stolen-invalid-lease-id",
+                expires_at_epoch_ms=int(time.time() * 1000) + 10000,
+                fence_token=0,
+            )
+
+            with pytest.raises(LeaseTimeoutError) as exc_info:
+                await backend.renew_lease(stolen_lease, ttl_ms=10000)
+
+            assert exc_info.value.code == "BLK-STO-003"
+            await backend.release_lease(valid_lease)
+        finally:
+            await self._close_backend(backend)
+
+    @pytest.mark.asyncio
+    async def test_checkpoint_save_and_load_happy_path(self) -> None:
+        """Verify saving and loading checkpoint with valid lease and revision increments."""
+        backend = await self._get_backend()
+        session_id = "test-contract-checkpoint-happy"
+        try:
+            lease = await backend.acquire_lease(session_id, ttl_ms=10000)
+
+            # Initially nonexistent
+            assert await backend.load_checkpoint(session_id) is None
+
+            cp0 = SessionCheckpoint(
+                session_id=session_id,
+                schema_version=1,
+                revision_id=0,
+                state={"stage": "start", "attempts": 1},
+                task_stack=({"frame_id": "root"},),
+                last_ledger_hash="hash0",
+                created_at="2026-10-27T12:00:00Z",
+                updated_at="2026-10-27T12:00:00Z",
+            )
+            await backend.save_checkpoint(cp0, lease)
+
+            loaded0 = await backend.load_checkpoint(session_id)
+            assert loaded0 is not None
+            assert loaded0.session_id == session_id
+            assert loaded0.schema_version == 1
+            assert loaded0.revision_id == 0
+            assert loaded0.state == {"stage": "start", "attempts": 1}
+            assert loaded0.task_stack == ({"frame_id": "root"},)
+            assert loaded0.last_ledger_hash == "hash0"
+
+            # Next revision +1
+            cp1 = SessionCheckpoint(
+                session_id=session_id,
+                schema_version=1,
+                revision_id=1,
+                state={"stage": "start", "attempts": 2},
+                task_stack=({"frame_id": "root"},),
+                last_ledger_hash="hash1",
+                created_at="2026-10-27T12:00:00Z",
+                updated_at="2026-10-27T12:01:00Z",
+            )
+            await backend.save_checkpoint(cp1, lease)
+
+            loaded1 = await backend.load_checkpoint(session_id)
+            assert loaded1 is not None
+            assert loaded1.revision_id == 1
+            assert loaded1.state == {"stage": "start", "attempts": 2}
+            assert loaded1.last_ledger_hash == "hash1"
+
+            await backend.release_lease(lease)
+        finally:
+            await self._close_backend(backend)
+
+    @pytest.mark.asyncio
+    async def test_checkpoint_save_cas_conflict(self) -> None:
+        """Verify saving checkpoint with non-incrementing revision raises OptimisticLockError."""
+        backend = await self._get_backend()
+        session_id = "test-contract-checkpoint-cas"
+        try:
+            lease = await backend.acquire_lease(session_id, ttl_ms=10000)
+
+            cp0 = SessionCheckpoint(session_id=session_id, schema_version=1, revision_id=0)
+            await backend.save_checkpoint(cp0, lease)
+
+            # Attempt save with duplicate revision_id=0 (expected 1)
+            cp_conflict = SessionCheckpoint(session_id=session_id, schema_version=1, revision_id=0)
+            with pytest.raises(OptimisticLockError) as exc_info:
+                await backend.save_checkpoint(cp_conflict, lease)
+            assert exc_info.value.code == "BLK-STO-002"
+
+            # Attempt save with skipped revision_id=3 (expected 1)
+            cp_skip = SessionCheckpoint(session_id=session_id, schema_version=1, revision_id=3)
+            with pytest.raises(OptimisticLockError) as exc_info2:
+                await backend.save_checkpoint(cp_skip, lease)
+            assert exc_info2.value.code == "BLK-STO-002"
+
+            await backend.release_lease(lease)
+        finally:
+            await self._close_backend(backend)
+
+    @pytest.mark.asyncio
+    async def test_checkpoint_save_expired_or_invalid_lease(self) -> None:
+        """Verify save_checkpoint with invalid or expired lease raises LeaseTimeoutError."""
+        backend = await self._get_backend()
+        session_id = "test-contract-invalid-lease-save"
+        try:
+            fake_lease = LeaseHandle(
+                session_id=session_id,
+                lease_id="nonexistent-lease",
+                expires_at_epoch_ms=int(time.time() * 1000) + 10000,
+                fence_token=1,
+            )
+            cp = SessionCheckpoint(session_id=session_id, schema_version=1, revision_id=0)
+
+            with pytest.raises(LeaseTimeoutError) as exc_info:
+                await backend.save_checkpoint(cp, fake_lease)
+            assert exc_info.value.code == "BLK-STO-003"
+
+            # Expired lease
+            expired_lease = LeaseHandle(
+                session_id=session_id,
+                lease_id="expired-lease",
+                expires_at_epoch_ms=int(time.time() * 1000) - 1000,
+                fence_token=1,
+            )
+            with pytest.raises(LeaseTimeoutError) as exc_info2:
+                await backend.save_checkpoint(cp, expired_lease)
+            assert exc_info2.value.code == "BLK-STO-003"
+        finally:
+            await self._close_backend(backend)
+
+    @pytest.mark.asyncio
+    async def test_checkpoint_load_nonexistent(self) -> None:
+        """Verify load_checkpoint returns None for nonexistent session ID."""
+        backend = await self._get_backend()
+        try:
+            assert await backend.load_checkpoint("session-nonexistent-contract-123") is None
+        finally:
+            await self._close_backend(backend)
+
+    @pytest.mark.asyncio
+    async def test_schema_upcaster_migration(self) -> None:
+        """Verify chained SchemaUpcaster migrations upgrade checkpoint version on load."""
+        def upcast_1_to_2(data: dict[str, Any]) -> dict[str, Any]:
+            payload = dict(data)
+            payload["schema_version"] = 2
+            state = dict(payload.get("state", {}))
+            state["v2_migrated"] = True
+            payload["state"] = state
+            return payload
+
+        def upcast_2_to_3(data: dict[str, Any]) -> dict[str, Any]:
+            payload = dict(data)
+            payload["schema_version"] = 3
+            state = dict(payload.get("state", {}))
+            state["v3_migrated"] = True
+            payload["state"] = state
+            return payload
+
+        upcasters = {1: upcast_1_to_2, 2: upcast_2_to_3}
+        backend = await self._get_backend(upcasters=upcasters, target_schema_version=3)
+        session_id = "test-contract-upcaster-chain"
+        try:
+            lease = await backend.acquire_lease(session_id, ttl_ms=10000)
+            cp_v1 = SessionCheckpoint(
+                session_id=session_id,
+                schema_version=1,
+                revision_id=0,
+                state={"initial_key": "v1_value"},
+            )
+            await backend.save_checkpoint(cp_v1, lease)
+
+            loaded = await backend.load_checkpoint(session_id)
+            assert loaded is not None
+            assert loaded.schema_version == 3
+            assert loaded.state.get("initial_key") == "v1_value"
+            assert loaded.state.get("v2_migrated") is True
+            assert loaded.state.get("v3_migrated") is True
+
+            await backend.release_lease(lease)
+        finally:
+            await self._close_backend(backend)
+
+    @pytest.mark.asyncio
+    async def test_boundary_payloads(self) -> None:
+        """Verify 64KB state, Unicode/RTL strings, binary vault_map, and max stack depth."""
+        backend = await self._get_backend()
+        session_id = "test-contract-boundary-payloads"
+        try:
+            lease = await backend.acquire_lease(session_id, ttl_ms=10000)
+
+            large_string = "A" * 65536
+            unicode_rtl_text = "English & Arabic: مرحبًا \u200f & Hebrew: שָׁלוֹם 🚀"
+            vault_bytes = b"\x00\x01\x02\xff\xfe\xaa\xbb\xcc\xdd\xee\x00"
+
+            task_stack = tuple(
+                {"depth": d, "stage": f"stage_{d}", "data": [d] * 10}
+                for d in range(6)
+            )
+            pending_outbox = tuple(
+                {"record_id": f"rec_{i}", "payload": f"data_{i}"}
+                for i in range(3)
+            )
+
+            cp = SessionCheckpoint(
+                session_id=session_id,
+                schema_version=1,
+                revision_id=0,
+                state={
+                    "large": large_string,
+                    "unicode": unicode_rtl_text,
+                    "nested": {"level1": {"level2": {"level3": "deep"}}},
+                },
+                task_stack=task_stack,
+                last_ledger_hash="e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                pending_ledger_outbox=pending_outbox,
+                vault_map=vault_bytes,
+                created_at="2026-10-27T12:00:00.000000Z",
+                updated_at="2026-10-27T12:00:00.000000Z",
+            )
+            await backend.save_checkpoint(cp, lease)
+
+            loaded = await backend.load_checkpoint(session_id)
+            assert loaded is not None
+            assert loaded.session_id == session_id
+            assert loaded.state["large"] == large_string
+            assert loaded.state["unicode"] == unicode_rtl_text
+            assert loaded.state["nested"] == {"level1": {"level2": {"level3": "deep"}}}
+            assert len(loaded.task_stack) == 6
+            assert loaded.task_stack == task_stack
+            assert loaded.pending_ledger_outbox == pending_outbox
+            assert loaded.vault_map == vault_bytes
+
+            await backend.release_lease(lease)
+        finally:
+            await self._close_backend(backend)
+
+    @pytest.mark.asyncio
+    async def test_schema_upcaster_missing_version_raises_storage_error(self) -> None:
+        """Verify missing upcaster when target_schema_version is higher raises BLK-STO-001."""
+        def upcast_1_to_2(data: dict[str, Any]) -> dict[str, Any]:
+            payload = dict(data)
+            payload["schema_version"] = 2
+            return payload
+
+        # Backend configured with target_schema_version=3, but only upcaster 1->2 is provided
+        upcasters = {1: upcast_1_to_2}
+        backend = await self._get_backend(upcasters=upcasters, target_schema_version=3)
+        session_id = "test-contract-missing-upcaster"
+        try:
+            lease = await backend.acquire_lease(session_id, ttl_ms=10000)
+            cp = SessionCheckpoint(
+                session_id=session_id,
+                schema_version=1,
+                revision_id=0,
+                state={"key": "val"},
+            )
+            await backend.save_checkpoint(cp, lease)
+
+            with pytest.raises(StorageError) as exc_info:
+                await backend.load_checkpoint(session_id)
+
+            assert exc_info.value.code == "BLK-STO-001"
+            assert exc_info.value.session_id == session_id
+            await backend.release_lease(lease)
+        finally:
+            await self._close_backend(backend)
+
+    @pytest.mark.asyncio
+    async def test_heartbeat_renewal_failure_in_context(self) -> None:
+        """Verify invalid interval raises ValueError, and renewal failure raises on context exit."""
+        backend = await self._get_backend()
+        session_id = "test-contract-heartbeat-failure"
+        try:
+            lease = await backend.acquire_lease(session_id, ttl_ms=1000)
+
+            # 1. Validation failure: heartbeat_interval_ms >= ttl_ms
+            with pytest.raises(ValueError, match="strictly less than"):
+                SessionLeaseHeartbeat(backend, lease, heartbeat_interval_ms=1000, ttl_ms=1000)
+
+            with pytest.raises(ValueError, match="strictly less than"):
+                SessionLeaseHeartbeat(backend, lease, heartbeat_interval_ms=2000, ttl_ms=1000)
+
+            # 2. Background renewal failure on stolen/expired/released lease raises on __aexit__
+            with pytest.raises(LeaseTimeoutError) as exc_info:
+                async with SessionLeaseHeartbeat(
+                    backend,
+                    lease,
+                    heartbeat_interval_ms=20,
+                    ttl_ms=500,
+                ):
+                    # Invalidate lease from outside while inside heartbeat context
+                    await backend.release_lease(lease)
+                    await asyncio.sleep(0.06)
+
+            assert exc_info.value.code == "BLK-STO-003"
+        finally:
+            await self._close_backend(backend)
+
+
+StorageBackendContractSuite = StateStoreContractSuite
+
+__all__: list[str] = [
+    "PIIStripperContractSuite",
+    "StateStoreContractSuite",
+    "StorageBackendContractSuite",
+]
