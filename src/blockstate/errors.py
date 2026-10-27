@@ -62,6 +62,11 @@ class BlockstateError(Exception):
             prefix = f"[{self.code}]"
         return f"{prefix} {self.message}{context_str}"
 
+    @property
+    def stage_id(self) -> str | None:
+        """Alias for stage identifier."""
+        return self.stage
+
     def __str__(self) -> str:
         return self._format_message()
 
@@ -158,6 +163,118 @@ class FieldValidationError(SlotValidationError):
 
     default_code = "BLK-VAL-002"
 
+    def __init__(
+        self,
+        message: str = "Field validation failed",
+        code: str | None = None,
+        *,
+        errors: list[dict[str, Any]] | None = None,
+        field_path: str | None = None,
+        **context: Any,
+    ) -> None:
+        self.errors: list[dict[str, Any]] = list(errors) if errors is not None else []
+        self.field_path = field_path
+        if field_path is not None and "field_path" not in context:
+            context["field_path"] = field_path
+        super().__init__(message=message, code=code, **context)
+
+    @classmethod
+    def from_pydantic_error(
+        cls,
+        exc: Any,
+        *,
+        field_path: str | None = None,
+        stage: str | None = None,
+        stage_id: str | None = None,
+        frame: Any = None,
+        session_id: str | None = None,
+        turn_index: int | None = None,
+        **context: Any,
+    ) -> "FieldValidationError":
+        """Construct a sanitised FieldValidationError from a Pydantic ValidationError.
+
+        Guarantees that raw rejected inputs and context are omitted (include_input=False,
+        include_context=False) to prevent data leakage.
+        """
+        if frame is not None and stage is None and stage_id is None:
+            stage = getattr(frame, "stage_id", None)
+        effective_stage = stage if stage is not None else stage_id
+        sanitised = sanitise_validation_errors(exc)
+        first_msg = sanitised[0]["msg"] if sanitised else (str(exc) or "Field validation failed")
+        first_loc = (
+            ".".join(str(p) for p in sanitised[0]["loc"])
+            if sanitised and "loc" in sanitised[0] and sanitised[0]["loc"]
+            else field_path
+        )
+        return cls(
+            message=first_msg,
+            errors=sanitised,
+            field_path=field_path or first_loc,
+            stage=effective_stage,
+            session_id=session_id,
+            turn_index=turn_index,
+            **context,
+        )
+
+
+class DisqualifyingBreachError(SlotValidationError):
+    """Raised when candidate input violates an explicit stage qualification constraint."""
+
+    default_code = "BLK-VAL-003"
+
+    def __init__(
+        self,
+        message: str = "Disqualifying validation breach detected",
+        code: str | None = None,
+        *,
+        field_name: str | None = None,
+        target_stage: str | None = None,
+        **context: Any,
+    ) -> None:
+        self.field_name = field_name
+        self.target_stage = target_stage
+        if field_name is not None and "field_name" not in context:
+            context["field_name"] = field_name
+        if target_stage is not None and "target_stage" not in context:
+            context["target_stage"] = target_stage
+        super().__init__(message=message, code=code, **context)
+
+
+def sanitise_validation_errors(exc: Any) -> list[dict[str, Any]]:
+    """Sanitise Pydantic validation error entries, stripping raw input and context.
+
+    Ensures that no raw rejected input or unvaulted PII is leaked into error logs,
+    telemetry, or prompt payloads.
+    """
+    if hasattr(exc, "errors") and callable(exc.errors):
+        raw_errors = exc.errors(include_input=False, include_context=False, include_url=False)
+    elif isinstance(exc, list):
+        raw_errors = exc
+    else:
+        raw_errors = [{"msg": str(exc), "type": "value_error"}]
+
+    sanitised: list[dict[str, Any]] = []
+    # Lazy import to avoid circular dependency
+    from blockstate.security.pii_patterns import detect_pii_spans
+
+    for err in raw_errors:
+        cleaned: dict[str, Any] = dict(err)
+        cleaned.pop("input", None)
+        cleaned.pop("ctx", None)
+        cleaned.pop("url", None)
+
+        msg = str(cleaned.get("msg", ""))
+        spans = detect_pii_spans(msg)
+        if spans:
+            chars = list(msg)
+            for span in sorted(spans, key=lambda s: s.start, reverse=True):
+                chars[span.start : span.end] = list("[REDACTED_PII]")
+            cleaned["msg"] = "".join(chars)
+
+        sanitised.append(cleaned)
+
+    return sanitised
+
 
 # =============================================================================
 # BLK-CON-*: Concurrency & Distributed Lease Errors
@@ -220,3 +337,30 @@ class Pass1TimeoutError(ModelError):
     """Raised when Pass 1 intent classification exceeds latency budget."""
 
     default_code = "BLK-MOD-003"
+
+
+__all__: list[str] = [
+    "ASTError",
+    "BlockstateError",
+    "CheckpointNotFoundError",
+    "ConcurrentSessionError",
+    "ConfigurationError",
+    "DisqualifyingBreachError",
+    "DuplicateStageError",
+    "DynamicTransitionError",
+    "FieldValidationError",
+    "InvalidStageGraphError",
+    "LeaseTimeoutError",
+    "ModelError",
+    "ModelRefusalError",
+    "OptimisticLockError",
+    "Pass1TimeoutError",
+    "SecurityViolationError",
+    "SlotValidationError",
+    "StackOverflowError",
+    "StorageError",
+    "UnauthorisedMutationError",
+    "UnreachableStageError",
+    "sanitise_validation_errors",
+]
+
