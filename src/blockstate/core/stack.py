@@ -1,17 +1,144 @@
 """TaskFrame and TaskStack pushdown automata execution context.
 
 Provides discrete frame-level slot isolation, locked leaf-path immutability
-protection, and bounded call-stack management for conversational digressions.
+protection, two-tier Global SessionState vs TaskFrameState isolation, and
+bounded call-stack management for conversational digressions.
 """
 
 from collections.abc import Iterable, Iterator, Mapping
 from copy import deepcopy
 from dataclasses import dataclass, field
-from typing import Any
+from types import MappingProxyType
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel
 
 from blockstate.errors import StackOverflowError, UnauthorisedMutationError
+
+if TYPE_CHECKING:
+    from blockstate.core.transitions import SlotMutation
+
+
+def _freeze_mapping(mapping: Mapping[str, Any]) -> MappingProxyType[str, Any]:
+    """Recursively freeze a mapping into immutable MappingProxyTypes."""
+    frozen: dict[str, Any] = {}
+    for key, value in mapping.items():
+        if isinstance(value, Mapping):
+            frozen[str(key)] = _freeze_mapping(value)
+        elif isinstance(value, list):
+            frozen[str(key)] = tuple(
+                _freeze_mapping(v) if isinstance(v, Mapping) else v for v in value
+            )
+        elif isinstance(value, set):
+            frozen[str(key)] = frozenset(value)
+        else:
+            frozen[str(key)] = value
+    return MappingProxyType(frozen)
+
+
+@dataclass(slots=True)
+class SessionState:
+    """Global cross-flow verified session facts.
+
+    Maintains persistent session facts (e.g. user_id, auth_level, is_suspicious)
+    that survive stage transitions and digression pushes/pops, isolated from
+    ephemeral stage slot state.
+    """
+
+    data: dict[str, Any] = field(default_factory=dict)
+
+    def get(self, key: str, default: Any = None) -> Any:
+        """Retrieve a session fact by key."""
+        return self.data.get(key, default)
+
+    def set(self, key: str, value: Any) -> None:
+        """Set a global session fact."""
+        self.data[key] = value
+
+    def update(self, items: Mapping[str, Any]) -> None:
+        """Update multiple session facts."""
+        self.data.update(items)
+
+    def to_dict(self) -> dict[str, Any]:
+        """Return a copy of the underlying session facts."""
+        return deepcopy(self.data)
+
+    def as_readonly(self) -> MappingProxyType[str, Any]:
+        """Return a deep-frozen read-only view of session facts."""
+        return _freeze_mapping(self.data)
+
+    def __getitem__(self, key: str) -> Any:
+        return self.data[key]
+
+    def __setitem__(self, key: str, value: Any) -> None:
+        self.data[key] = value
+
+    def __contains__(self, key: str) -> bool:
+        return key in self.data
+
+    def __len__(self) -> int:
+        return len(self.data)
+
+
+@dataclass(slots=True)
+class TaskFrameState:
+    """Discrete stage-scoped execution state.
+
+    Encapsulates frame-local slots, locked slot paths, and turn counts.
+    """
+
+    stage_id: str
+    slots: dict[str, Any] = field(default_factory=dict)
+    locked_slots: set[str] = field(default_factory=set)
+    turn_count: int = 0
+
+
+@dataclass(frozen=True, slots=True)
+class ReadOnlySessionView:
+    """Deep-frozen read-only projection of session data.
+
+    Passed to stage guards, classifiers, and tool handlers to ensure
+    that state mutations can occur exclusively via StatechartEngine.commit_turn().
+    """
+
+    session_id: str
+    state: Mapping[str, Any]
+    current_stage: str | None = None
+    stack_depth: int = 0
+    metadata: Mapping[str, Any] = field(default_factory=lambda: MappingProxyType({}))
+
+    @classmethod
+    def create(
+        cls,
+        session_id: str,
+        state: Mapping[str, Any],
+        current_stage: str | None = None,
+        stack_depth: int = 0,
+        metadata: Mapping[str, Any] | None = None,
+    ) -> "ReadOnlySessionView":
+        """Factory creating an immutable ReadOnlySessionView."""
+        frozen_state = _freeze_mapping(state)
+        frozen_meta = _freeze_mapping(metadata or {})
+        return cls(
+            session_id=session_id,
+            state=frozen_state,
+            current_stage=current_stage,
+            stack_depth=stack_depth,
+            metadata=frozen_meta,
+        )
+
+    def get(self, key: str, default: Any = None) -> Any:
+        """Retrieve a session fact safely from the read-only projection."""
+        return self.state.get(key, default)
+
+    def __getitem__(self, key: str) -> Any:
+        return self.state[key]
+
+    def __contains__(self, key: str) -> bool:
+        return key in self.state
+
+    def __len__(self) -> int:
+        return len(self.state)
 
 
 @dataclass(slots=True)
@@ -150,6 +277,20 @@ class TaskFrame:
                 for subpath in self._extract_all_paths(value, prefix=str(key)):
                     self.lock_slot(subpath)
 
+    def apply_child_mutation(self, mutation: "SlotMutation") -> None:
+        """Apply a typed slot mutation from a child digression frame.
+
+        Raises UnauthorisedMutationError (BLK-SEC-002) if this parent frame does
+        not declare allow_slot_overrides=True and mutation.force is False.
+        """
+        if not self.allow_slot_overrides and not mutation.force:
+            raise UnauthorisedMutationError(
+                f"Parent stage '{self.stage_id}' does not allow slot overrides from child frames",
+                code="BLK-SEC-002",
+                stage=self.stage_id,
+            )
+        self.update_slots(mutation.updates, lock=True, force=mutation.force)
+
     def copy(self) -> "TaskFrame":
         """Create a deep copy of this TaskFrame with isolated slot memory."""
         return TaskFrame(
@@ -235,6 +376,9 @@ class TaskStack:
 
 
 __all__: list[str] = [
+    "ReadOnlySessionView",
+    "SessionState",
     "TaskFrame",
+    "TaskFrameState",
     "TaskStack",
 ]
