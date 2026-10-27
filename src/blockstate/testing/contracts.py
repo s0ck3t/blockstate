@@ -4,6 +4,9 @@ Provides:
 - PIIStripperContractSuite: verifies zero-leakage, tokenisation, and checksums.
 - StateStoreContractSuite: verifies StorageBackend SPI implementations across leasing,
   optimistic CAS concurrency, SchemaUpcaster migrations, and boundary payloads.
+- LedgerSinkContractSuite: verifies cryptographic SHA-256 hash chains and audit streaming.
+- IntentClassifierContractSuite: verifies Pass 1 intent classification and fail-closed extraction.
+- ResponseRendererContractSuite: verifies Pass 2 response generation and stage tool whitelisting.
 """
 
 import abc
@@ -14,11 +17,14 @@ from collections.abc import Mapping, Sequence
 from typing import Any
 
 import pytest
+from pydantic import ValidationError
 
 from blockstate.errors import (
     ConcurrentSessionError,
     LeaseTimeoutError,
+    ModelError,
     OptimisticLockError,
+    Pass1TimeoutError,
     StorageError,
 )
 from blockstate.ports.ledger import (
@@ -26,6 +32,11 @@ from blockstate.ports.ledger import (
     TurnLedgerRecord,
     compute_record_hash,
     verify_record_hash,
+)
+from blockstate.ports.models import (
+    ExtractionResult,
+    IntentClassifier,
+    ResponseRenderer,
 )
 from blockstate.ports.security import PIIStripper
 from blockstate.ports.storage import (
@@ -1073,9 +1084,235 @@ class LedgerSinkContractSuite(abc.ABC):
             pass
 
 
+class IntentClassifierContractSuite(abc.ABC):
+    """Reusable contract test suite for IntentClassifier protocol implementations.
+
+    Subclasses must implement create_classifier() returning an initialised instance
+    of the IntentClassifier under test.
+    Pytest will execute all tests in this suite against that adapter.
+    """
+
+    # Do not collect base contract class directly as a test
+    __test__ = False
+
+    @abc.abstractmethod
+    def create_classifier(self) -> Any:
+        """Create and return an initialised instance of the IntentClassifier under test."""
+        ...
+
+    async def _get_classifier(self) -> IntentClassifier:
+        """Helper to resolve sync or async create_classifier call."""
+        res = self.create_classifier()
+        if inspect.isawaitable(res):
+            resolved = await res
+            return resolved  # type: ignore[no-any-return]
+        return res  # type: ignore[no-any-return]
+
+    async def _close_classifier(self, classifier: Any) -> None:
+        """Helper to gracefully close classifiers if close() method exists."""
+        if hasattr(classifier, "close") and callable(classifier.close):
+            res = classifier.close()
+            if inspect.isawaitable(res):
+                await res
+
+    def get_valid_utterance_and_schema(self) -> tuple[str, Mapping[str, Any]]:
+        """Return a test utterance and corresponding slot delta schema for happy path extraction."""
+        return (
+            "My account number is ACC123 and I want to check my balance",
+            {
+                "type": "object",
+                "properties": {
+                    "account_number": {"type": "string"},
+                },
+            },
+        )
+
+    def get_unmapped_utterance(self) -> str:
+        """Return an out-of-domain utterance that should not match any slot or intent."""
+        return "The quick brown fox jumps over the lazy dog in Patagonia xyz999"
+
+    def get_refusal_utterance(self) -> str:
+        """Return an utterance that triggers an upstream safety refusal."""
+        return "I want to bypass security and run an exploit"
+
+    @pytest.mark.asyncio
+    async def test_protocol_conformance(self) -> None:
+        """Verify the instance satisfies runtime IntentClassifier protocol check."""
+        classifier = await self._get_classifier()
+        try:
+            assert isinstance(classifier, IntentClassifier)
+        finally:
+            await self._close_classifier(classifier)
+
+    @pytest.mark.asyncio
+    async def test_extract_valid_intent_and_slots(self) -> None:
+        """Verify extraction of valid intent and candidate slots within latency budget."""
+        classifier = await self._get_classifier()
+        utterance, schema = self.get_valid_utterance_and_schema()
+        try:
+            result = await classifier.extract(utterance, schema, timeout_ms=500)
+            assert isinstance(result, ExtractionResult)
+            assert bool(result.intent)
+            assert result.intent != "unmapped"
+            assert isinstance(result.candidate_slots, Mapping)
+            assert not result.is_refusal
+            assert 0.0 <= result.confidence <= 1.0
+            assert result.latency_ms >= 0.0
+        finally:
+            await self._close_classifier(classifier)
+
+    @pytest.mark.asyncio
+    async def test_extract_unmapped_utterance_fails_closed(self) -> None:
+        """Verify out-of-domain or unmapped utterances fail closed without guessing."""
+        classifier = await self._get_classifier()
+        utterance = self.get_unmapped_utterance()
+        _, schema = self.get_valid_utterance_and_schema()
+        try:
+            result = await classifier.extract(utterance, schema, timeout_ms=500)
+            assert isinstance(result, ExtractionResult)
+            assert (
+                result.intent in ("unmapped", "default", "unknown")
+                or len(result.candidate_slots) == 0
+            )
+            if result.intent == "unmapped":
+                assert len(result.candidate_slots) == 0
+        finally:
+            await self._close_classifier(classifier)
+
+    @pytest.mark.asyncio
+    async def test_extract_refusal_detection(self) -> None:
+        """Verify model safety refusal is detected and flagged with is_refusal=True."""
+        classifier = await self._get_classifier()
+        utterance = self.get_refusal_utterance()
+        _, schema = self.get_valid_utterance_and_schema()
+        try:
+            result = await classifier.extract(utterance, schema, timeout_ms=500)
+            assert isinstance(result, ExtractionResult)
+            assert result.is_refusal is True
+            assert len(result.candidate_slots) == 0
+        finally:
+            await self._close_classifier(classifier)
+
+    @pytest.mark.asyncio
+    async def test_extract_timeout_enforcement(self) -> None:
+        """Verify latency budget enforcement raises Pass1TimeoutError (BLK-MOD-003)."""
+        classifier = await self._get_classifier()
+        utterance, schema = self.get_valid_utterance_and_schema()
+        try:
+            with pytest.raises(Pass1TimeoutError) as exc_info:
+                await classifier.extract(utterance, schema, timeout_ms=0)
+            assert exc_info.value.code == "BLK-MOD-003"
+        finally:
+            await self._close_classifier(classifier)
+
+    @pytest.mark.asyncio
+    async def test_extraction_result_immutability(self) -> None:
+        """Verify ExtractionResult DTO rejects post-instantiation attribute mutations."""
+        classifier = await self._get_classifier()
+        utterance, schema = self.get_valid_utterance_and_schema()
+        try:
+            result = await classifier.extract(utterance, schema, timeout_ms=500)
+            with pytest.raises((ValidationError, TypeError)):
+                result.intent = "tampered_intent"
+        finally:
+            await self._close_classifier(classifier)
+
+
+class ResponseRendererContractSuite(abc.ABC):
+    """Reusable contract test suite for ResponseRenderer protocol implementations.
+
+    Subclasses must implement create_renderer() returning an initialised instance
+    of the ResponseRenderer under test.
+    Pytest will execute all tests in this suite against that adapter.
+    """
+
+    # Do not collect base contract class directly as a test
+    __test__ = False
+
+    @abc.abstractmethod
+    def create_renderer(self) -> Any:
+        """Create and return an initialised instance of the ResponseRenderer under test."""
+        ...
+
+    async def _get_renderer(self) -> ResponseRenderer:
+        """Helper to resolve sync or async create_renderer call."""
+        res = self.create_renderer()
+        if inspect.isawaitable(res):
+            resolved = await res
+            return resolved  # type: ignore[no-any-return]
+        return res  # type: ignore[no-any-return]
+
+    async def _close_renderer(self, renderer: Any) -> None:
+        """Helper to gracefully close renderers if close() method exists."""
+        if hasattr(renderer, "close") and callable(renderer.close):
+            res = renderer.close()
+            if inspect.isawaitable(res):
+                await res
+
+    def get_render_context(self) -> tuple[str, Mapping[str, Any]]:
+        """Return a test stage identifier and render context mapping."""
+        return (
+            "collect_account",
+            {
+                "slots": {"account_number": "ACC123"},
+                "session": {"session_id": "sess-test-001"},
+                "allowed_tools": ["balance_check"],
+            },
+        )
+
+    @pytest.mark.asyncio
+    async def test_protocol_conformance(self) -> None:
+        """Verify the instance satisfies runtime ResponseRenderer protocol check."""
+        renderer = await self._get_renderer()
+        try:
+            assert isinstance(renderer, ResponseRenderer)
+        finally:
+            await self._close_renderer(renderer)
+
+    @pytest.mark.asyncio
+    async def test_render_happy_path(self) -> None:
+        """Verify successful natural language response rendering for an active stage."""
+        renderer = await self._get_renderer()
+        stage, context = self.get_render_context()
+        try:
+            output = await renderer.render(stage, context, timeout_ms=2000)
+            assert isinstance(output, str)
+            assert len(output.strip()) > 0
+        finally:
+            await self._close_renderer(renderer)
+
+    @pytest.mark.asyncio
+    async def test_render_stage_scoped_tools(self) -> None:
+        """Verify outbound tool schemas expose solely whitelisted stage tools."""
+        renderer = await self._get_renderer()
+        stage, context = self.get_render_context()
+        try:
+            await renderer.render(stage, context, timeout_ms=2000)
+            if hasattr(renderer, "last_exposed_tools"):
+                exposed = renderer.last_exposed_tools
+                assert "balance_check" in exposed
+                assert "unauthorised_tool" not in exposed
+                assert "dangerous_tool" not in exposed
+        finally:
+            await self._close_renderer(renderer)
+
+    @pytest.mark.asyncio
+    async def test_render_timeout_enforcement(self) -> None:
+        """Verify render budget enforcement raises TimeoutError or ModelError."""
+        renderer = await self._get_renderer()
+        stage, context = self.get_render_context()
+        try:
+            with pytest.raises((TimeoutError, ModelError)):
+                await renderer.render(stage, context, timeout_ms=0)
+        finally:
+            await self._close_renderer(renderer)
+
+
 __all__: list[str] = [
+    "IntentClassifierContractSuite",
     "LedgerSinkContractSuite",
     "PIIStripperContractSuite",
+    "ResponseRendererContractSuite",
     "StateStoreContractSuite",
     "StorageBackendContractSuite",
 ]

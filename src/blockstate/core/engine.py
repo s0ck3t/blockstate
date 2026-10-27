@@ -483,7 +483,11 @@ class StatechartEngine:
         elif choice_payload is not None:
             rendered_message = choice_payload.prompt
         elif self.renderer is not None:
-            render_ctx = {"slots": active_frame.slots, "session": session_state.to_dict()}
+            render_ctx = {
+                "slots": active_frame.slots,
+                "session": session_state.to_dict(),
+                "allowed_tools": list(active_frame.allowed_tools),
+            }
             rendered_message = await self.renderer.render(
                 active_frame.stage_id,
                 render_ctx,
