@@ -34,3 +34,21 @@ class PIIStripper(Protocol):
     ) -> Mapping[str, Any]:
         """Recursively sanitise dictionary or mapping values."""
         ...
+
+    def detokenise(
+        self,
+        text: str,
+        vault_map: Mapping[str, str] | None = None,
+        session_id: str | None = None,
+    ) -> str:
+        """Restore tokens in text to their original plaintexts."""
+        ...
+
+    def detokenise_mapping(
+        self,
+        data: Mapping[str, Any],
+        vault_map: Mapping[str, str] | None = None,
+        session_id: str | None = None,
+    ) -> Mapping[str, Any]:
+        """Recursively detokenise all string values in a mapping."""
+        ...

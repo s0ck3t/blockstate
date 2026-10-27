@@ -7,14 +7,24 @@ from blockstate.errors import (
     DuplicateStageError,
     SecurityViolationError,
 )
+from blockstate.security import (
+    Detokenise,
+    PIIVault,
+    VaultCipher,
+    Vaulted,
+)
 
 __version__ = "0.0.1a1"
 
-__all__ = [
+__all__: list[str] = [
     "BlockstateError",
     "BlockstateSettings",
     "ConfigurationError",
+    "Detokenise",
     "DuplicateStageError",
+    "PIIVault",
     "SecurityViolationError",
+    "VaultCipher",
+    "Vaulted",
     "__version__",
 ]

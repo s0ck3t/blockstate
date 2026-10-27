@@ -303,6 +303,22 @@ class DummyPIIStripper:
     ) -> Mapping[str, Any]:
         return dict(data)
 
+    def detokenise(
+        self,
+        text: str,
+        vault_map: Mapping[str, str] | None = None,
+        session_id: str | None = None,
+    ) -> str:
+        return text
+
+    def detokenise_mapping(
+        self,
+        data: Mapping[str, Any],
+        vault_map: Mapping[str, str] | None = None,
+        session_id: str | None = None,
+    ) -> Mapping[str, Any]:
+        return dict(data)
+
 
 def test_security_protocols_and_sanitised_payload_dto() -> None:
     """Verify PIIStripper protocol and SanitisedPayload DTO immutability."""
