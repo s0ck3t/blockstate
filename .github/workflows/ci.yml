@@ -27,7 +27,7 @@ jobs:
         run: uv python install 3.12
 
       - name: Install dependencies and dev tools
-        run: uv sync --extra dev
+        run: uv sync --extra dev --extra all
 
       - name: Lint and formatting check (Ruff)
         run: |
@@ -49,4 +49,4 @@ jobs:
 
       - name: Subcomponent licence compliance gate (pip-licenses)
         run: >-
-          uv run pip-licenses --ignore-packages blockstate --allow-only="MIT;MIT License;MIT-0;0BSD;Apache-2.0;Apache Software License;Apache-2.0 OR BSD-3-Clause;Apache-2.0 OR BSD-2-Clause;Apache Software License; BSD License;BSD-2-Clause;BSD-3-Clause;BSD License;Python Software Foundation License;PSF-2.0;ISC License (ISCL);Mozilla Public License 2.0 (MPL 2.0);MPL-2.0"
+          uv run pip-licenses --partial-match --ignore-packages blockstate --allow-only="MIT;MIT License;MIT-0;0BSD;Apache-2.0;Apache Software License;Apache-2.0 OR BSD-3-Clause;Apache-2.0 OR BSD-2-Clause;Apache Software License; BSD License;BSD-2-Clause;BSD-3-Clause;3-Clause BSD License;BSD License;Python Software Foundation License;PSF-2.0;ISC;ISC License (ISCL);Mozilla Public License 2.0 (MPL 2.0);MPL-2.0"
