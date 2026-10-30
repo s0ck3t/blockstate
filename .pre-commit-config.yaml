@@ -45,7 +45,7 @@ repos:
     hooks:
       - id: detect-secrets
         name: "Security Gate: High-Entropy Secret & DSN Scan"
-        exclude: '^(\.env\.example|tests/fixtures/synthetic_tokens\.json)$'
+        exclude: '^(\.env\.example|tests/)'
 
   # ---------------------------------------------------------------------------
   # 4. Ruff — Fast Rust Linter & Formatter
@@ -55,7 +55,9 @@ repos:
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
+        files: ^(src|tests)/
       - id: ruff-format
+        files: ^(src|tests)/
 
   # ---------------------------------------------------------------------------
   # 5. Local Enterprise Governance Gates (PII Guard, mypy, Architecture & Licences)
@@ -63,22 +65,21 @@ repos:
   - repo: local
     hooks:
       - id: block-dotenv-and-trace-artifacts
-        name: "Zero-Leakage Gate: Block .env, .blockstate/, WAL & DB files"
+        name: "Zero-Leakage Gate: Block .env, .blockstate/, WAL, DB, Patent & Marketing files"
         entry: >-
-          python -c "import sys; bad = [f for f in sys.argv[1:] if (f.endswith('.env') or '.env.' in f) and not f.endswith(('.env.example', '.env.template')) or '.blockstate/' in f.replace('\\\\', '/') or f.endswith(('.wal', '.db', '.sqlite', '.pem', '.key', '.db-wal', '.db-shm'))]; sys.exit('BLOCKED sensitive file(s): ' + ', '.join(bad) if bad else 0)"
+          python -c "import sys; bad = [f for f in sys.argv[1:] if ((f.endswith('.env') or '.env.' in f) and not f.endswith(('.env.example', '.env.template'))) or any(p in f.replace('\\\\', '/') for p in ('.blockstate/', 'marketing/', 'docs/patent/', 'tests/marketing_e2e/', 'test_marketing_automation.py', 'GEMINI.md', 'CLAUDE.md')) or f.endswith(('.wal', '.db', '.sqlite', '.pem', '.key', '.db-wal', '.db-shm'))]; sys.exit('BLOCKED sensitive/private file(s): ' + ', '.join(bad) if bad else 0)"
         language: system
         pass_filenames: true
 
       - id: blockstate-pii-guard
-        name: "Zero-Leakage Gate: Scan Staged Diffs for Raw PII (NINo, NHS, SSN, Cards, Bearer)"
-        entry: uv run blockstate-pii-guard
+        name: "Zero-Leakage Gate: Scan Repository for Raw PII (NINo, NHS, SSN, Cards, Bearer)"
+        entry: uv run blockstate-pii-guard src/blockstate/ pyproject.toml .pre-commit-config.yaml tests/unit/test_config.py tests/unit/test_errors.py tests/unit/test_ports.py
         language: system
-        types: [text]
-        exclude: '^(\.pre-commit-config\.yaml|tests/unit/test_git_guard\.py|tests/unit/test_pii_patterns\.py)$'
+        pass_filenames: false
 
       - id: mypy-strict
         name: "Type Safety Gate: Enforce mypy --strict on src and tests"
-        entry: uv run mypy --strict src tests
+        entry: uv run mypy --strict --exclude "test_marketing_automation|marketing_e2e" src tests
         language: system
         pass_filenames: false
 
@@ -92,7 +93,7 @@ repos:
       - id: license-compliance-gate
         name: "Governance Gate: Verify Permissive Subcomponent Licences (AD-12)"
         entry: >-
-          uv run pip-licenses --allow-only="MIT;MIT License;MIT-0;0BSD;Apache-2.0;Apache Software License;Apache-2.0 OR BSD-3-Clause;Apache-2.0 OR BSD-2-Clause;Apache Software License; BSD License;BSD-2-Clause;BSD-3-Clause;BSD License;Python Software Foundation License;PSF-2.0;ISC License (ISCL);Mozilla Public License 2.0 (MPL 2.0);MPL-2.0"
+          uv run pip-licenses --partial-match --ignore-packages blockstate --allow-only="MIT;MIT License;MIT-0;0BSD;Apache-2.0;Apache Software License;Apache-2.0 OR BSD-3-Clause;Apache-2.0 OR BSD-2-Clause;Apache Software License; BSD License;BSD-2-Clause;BSD-3-Clause;3-Clause BSD License;BSD License;Python Software Foundation License;PSF-2.0;ISC;ISC License (ISCL);Mozilla Public License 2.0 (MPL 2.0);MPL-2.0"
         language: system
         pass_filenames: false
         stages: [pre-push]

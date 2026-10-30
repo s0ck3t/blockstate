@@ -25,7 +25,7 @@ The motor claims workflow guides a driver through initial policy identification,
 flowchart TD
     START(["Customer Ingress"]) --> PII["PIIVault Sanitisation<br/>(Tokenises Postcodes & Identifiers)"]
     PII --> V_POL["Stage: verify_policy<br/>(Collects Policy Number & Postcode)"]
-    
+
     subgraph Digressions["Pushdown Automata (TaskStack)"]
         V_POL -.->|"Digression: ncb_faq"| D_NCB["ncb_faq<br/>(Explains No Claims Discount)"]
         D_NCB -.->|"Transition.pop_frame()"| V_POL
@@ -36,14 +36,14 @@ flowchart TD
     end
 
     V_POL -->|"Guard: guard_policy_verified<br/>Tool: lookup_policy_record"| INC["Stage: incident_details<br/>(Collects Date, Damage, Drivability)"]
-    
+
     INC -.->|"Digression Inquiries"| Digressions
-    
+
     INC -->|"Guard: guard_incident_captured"| TRIAGE["Stage: triage_and_routing<br/>Tool: estimate_repair_cost"]
-    
+
     TRIAGE -->|"Minor Single-Vehicle Cosmetic <= £1,000<br/>Guard: guard_triage_fast_track"| FAST["Stage: fast_track_settlement (Terminal)<br/>Tool: authorise_repair_network"]
     TRIAGE -->|"Driver Impairment, Zero Damage, or > £1,000<br/>Guard: guard_triage_escalation"| MANUAL["Stage: manual_adjuster_review (Terminal)<br/>Tool: assign_claims_adjuster"]
-    
+
     FAST --> AUDIT["TurnLedger Cryptographic Audit<br/>(SHA-256 Non-Repudiation Chain)"]
     MANUAL --> AUDIT
 ```
@@ -126,7 +126,7 @@ class TriageAssessment:
 
 class UnderwritingTriageAssessor:
     """Enterprise Underwriting and Liability assessment engine for motor FNOL.
-    
+
     Evaluates structured, validated Pydantic slot fields with zero regex or substring matching.
     """
 
@@ -603,7 +603,7 @@ CLI verification command:
 Output:
 ```
 ============================================================
-           BLOCKSTATE STATIC SECURITY VERIFICATION          
+           BLOCKSTATE STATIC SECURITY VERIFICATION
 ============================================================
 File: examples/05_motor_insurance_claim_live.py
 Verification Target: Dominance Proof (Lengauer-Tarjan Solver)
@@ -642,7 +642,7 @@ Execute the audit suite directly in terminal:
 Output:
 ```
 ================================================================================
-   BLOCKSTATE REFERENCE AGENT 5 - ADVERSARIAL DEFENSIVE AUDIT SUITE             
+   BLOCKSTATE REFERENCE AGENT 5 - ADVERSARIAL DEFENSIVE AUDIT SUITE
 ================================================================================
 Audit Execution Mode: Deterministic CI Mode (Zero Regex)
 

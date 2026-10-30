@@ -1,8 +1,8 @@
 # Blockstate (`blockstate`): Product & Engineering Roadmap
 
-> **Document Version**: 1.1 (30 October 2026)  
-> **Baseline Status**: `v1.0.0` Core Complete (Epics 1 to 5, Stories 1 to 10, 100% Patent Invariant Pass)  
-> **Patent Baseline**: UK Patent Pending (*Process execution control system*, Priority Filing Date: 28 October 2026, [`PATENTS.md`](../PATENTS.md))  
+> **Document Version**: 1.1 (30 October 2026)
+> **Baseline Status**: `v1.0.0` Core Complete (Epics 1 to 5, Stories 1 to 10, 100% Patent Invariant Pass)
+> **Patent Baseline**: UK Patent Pending (*Process execution control system*, Priority Filing Date: 28 October 2026, [`PATENTS.md`](../PATENTS.md))
 
 ---
 

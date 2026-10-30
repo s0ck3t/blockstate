@@ -135,5 +135,3 @@ tests/marketing_e2e/
 tests/unit/test_marketing_automation.py
 .github/workflows/marketing-automation.yml
 .github/workflows/deploy-pages.yml
-
-

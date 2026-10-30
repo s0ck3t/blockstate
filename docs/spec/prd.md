@@ -461,7 +461,7 @@ class MotorClaimAgent(Agent):
     async def collect_details(self, slots: ClaimSlots) -> Transition["tier_auto_payout" | "tier_manager_review" | "escalate"]:
         if not self.check_account_standing():
             return Transition.to("escalate", reason="Flagged account")
-        
+
         # Static branching based on value thresholds (verified by DCG AST compiler)
         if slots.damage_amount <= 100.0:
             return Transition.to("tier_auto_payout")
