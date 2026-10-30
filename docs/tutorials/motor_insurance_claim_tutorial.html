@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Building Regulated Conversational AI with Blockstate: An Enterprise Motor Insurance Claims Statechart</title>
+  <style>
+    :root {
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+      --color-bg: #f8fafc;
+      --color-surface: #ffffff;
+      --color-text: #0f172a;
+      --color-muted: #475569;
+      --color-border: #e2e8f0;
+      --color-primary: #0284c7;
+      --color-primary-dark: #0369a1;
+      --color-success: #16a34a;
+      --color-warning: #d97706;
+      --color-danger: #dc2626;
+      --color-code-bg: #0f172a;
+      --color-code-text: #f8fafc;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--color-bg);
+      color: var(--color-text);
+      line-height: 1.65;
+      padding: 2rem 1rem;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: var(--color-surface);
+      padding: 3rem 2.5rem;
+      border-radius: 12px;
+      border: 1px solid var(--color-border);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    header {
+      border-bottom: 2px solid var(--color-border);
+      padding-bottom: 2rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .badge-bar {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.25rem 0.65rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .badge-blue { background: #e0f2fe; color: #0369a1; }
+    .badge-green { background: #dcfce7; color: #15803d; }
+    .badge-purple { background: #f3e8ff; color: #7e22ce; }
+
+    h1 {
+      font-size: 2.25rem;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      line-height: 1.25;
+      color: #0f172a;
+      margin-bottom: 1rem;
+    }
+
+    .subtitle {
+      font-size: 1.15rem;
+      color: var(--color-muted);
+      line-height: 1.5;
+    }
+
+    h2 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-top: 2.5rem;
+      margin-bottom: 1rem;
+      border-bottom: 1px solid var(--color-border);
+      padding-bottom: 0.5rem;
+      color: #1e293b;
+    }
+
+    h3 {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-top: 1.75rem;
+      margin-bottom: 0.75rem;
+      color: #334155;
+    }
+
+    p {
+      margin-bottom: 1.25rem;
+    }
+
+    ul, ol {
+      margin-bottom: 1.25rem;
+      padding-left: 1.5rem;
+    }
+
+    li {
+      margin-bottom: 0.5rem;
+    }
+
+    pre {
+      background: var(--color-code-bg);
+      color: var(--color-code-text);
+      padding: 1.25rem;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      line-height: 1.5;
+      margin-bottom: 1.5rem;
+      border: 1px solid #1e293b;
+    }
+
+    code {
+      font-family: var(--font-mono);
+      font-size: 0.875em;
+      background: #f1f5f9;
+      color: #0f172a;
+      padding: 0.15rem 0.35rem;
+      border-radius: 4px;
+    }
+
+    pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+    }
+
+    .callout {
+      padding: 1.25rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      border-left: 4px solid;
+    }
+
+    .callout-info {
+      background: #f0f9ff;
+      border-color: #0284c7;
+      color: #0369a1;
+    }
+
+    .callout-warning {
+      background: #fffbeb;
+      border-color: #f59e0b;
+      color: #b45309;
+    }
+
+    .callout-success {
+      background: #f0fdf4;
+      border-color: #22c55e;
+      color: #15803d;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 1.75rem;
+      font-size: 0.9rem;
+    }
+
+    th, td {
+      padding: 0.75rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: #334155;
+    }
+
+    tr:hover td {
+      background: #f1f5f9;
+    }
+
+    footer {
+      margin-top: 3.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--color-border);
+      font-size: 0.85rem;
+      color: var(--color-muted);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="badge-bar">
+        <span class="badge badge-blue">Deterministic Statecharts</span>
+        <span class="badge badge-purple">Zero-Trust Tool Gating</span>
+        <span class="badge badge-green">Lengauer-Tarjan Proofs</span>
+      </div>
+      <h1>Building Regulated Conversational AI with Blockstate</h1>
+      <p class="subtitle">A complete worked example: motor insurance First Notice of Loss (FNOL) with pushdown digressions, ingress PII tokenisation, underwriting liability assessment, and local inference via LM Studio.</p>
+    </header>
+
+    <section id="introduction">
+      <h2>1. The Problem: Probabilistic Autonomy in Regulated Domains</h2>
+      <p>
+        Most conversational AI frameworks let a large language model determine execution control: the model decides which tools to invoke, which branches to take, and when a task is completed.
+      </p>
+      <p>
+        In regulated environments such as insurance claims handling, retail banking, and clinical triage, probabilistic control creates unacceptable legal exposure. An insurance claim agent must never bypass identity verification, calculate settlement payouts using hallucinated logic, or authorise repairs for impaired drivers. Under regulatory frameworks like the UK Financial Conduct Authority (FCA) Consumer Duty and the European Union AI Act, organisations require mathematical certainty that compliance checkpoints cannot be avoided.
+      </p>
+      <div class="callout callout-info">
+        <strong>The Blockstate Approach:</strong> Blockstate enforces strict separation between workflow control and natural language generation. The state machine is written in pure Python using Declarative Control Grammar (DCG). The language model serves as a semantic slot extractor (Pass 1) and empathetic dialogue generator (Pass 2). It possesses zero authority to mutate state or skip compliance gates.
+      </div>
+    </section>
+
+    <section id="architecture">
+      <h2>2. Architecture: Declarative Statechart &amp; Two-Pass Execution</h2>
+      <p>
+        The motor claims workflow guides a policyholder through authentication, answers policy digressions without losing state, captures accident details, evaluates underwriting liability, and routes to either an approved bodyshop or a senior claims adjuster:
+      </p>
+      <ul>
+        <li><strong>Policy Verification:</strong> Collects policy number and UK postcode, querying policy records with detokenised parameters.</li>
+        <li><strong>Pushdown TaskStack Digressions:</strong> Handles inquiries (No Claims Discount, Excess, Courtesy Car) via call-return stack semantics. When the FAQ finishes, the frame pops and resumes data collection.</li>
+        <li><strong>Underwriting &amp; Liability Assessor:</strong> Inspects incident narratives for statutory driver impairment (falling asleep, mobile phone usage, intoxication), zero-damage claims, and third-party liability disputes.</li>
+        <li><strong>Compile-Time Dominator Proofs:</strong> The Lengauer-Tarjan dominator tree algorithm verifies that <code>verify_policy</code> dominates all settlement stages before the system can boot.</li>
+      </ul>
+    </section>
+
+    <section id="implementation">
+      <h2>3. Hardened Enterprise Implementation</h2>
+
+      <h3>3.1 Calendar Date Validation &amp; Underwriting Assessor (Zero Regex)</h3>
+      <p>
+        To eliminate brittle regex patterns and avoid hardcoded keyword lists, enterprise workflows rely on structured Pydantic slot models and deterministic Python domain evaluators:
+      </p>
+      <pre><code>class IncidentIntakeSlots(BaseModel):
+    """Slot schema for First Notice of Loss incident narrative and parameters."""
+    incident_date: str = Field(..., description="Date of accident in YYYY-MM-DD format")
+    incident_description: str = Field(..., description="Circumstances and physical damage description")
+    is_drivable: bool = Field(True, description="Whether the insured vehicle remains roadworthy")
+    third_party_involved: bool = Field(False, description="Whether third-party vehicles or property were involved")
+    driver_impairment: str = Field("none", description="Declared driver condition: none, fatigued_or_asleep, alcohol, mobile_phone")
+    damage_severity: str = Field("minor_cosmetic", description="Physical impact severity: none, minor_cosmetic, moderate, severe_structural")
+
+    @field_validator("incident_date")
+    @classmethod
+    def validate_incident_date(cls, v: str) -> str:
+        target_date = datetime.date.fromisoformat(v.strip())
+        today = datetime.date.today()
+        if target_date > today or (today - target_date).days > 30:
+            raise ValueError("Incident date invalid or outside 30-day reporting limit")
+        return target_date.isoformat()
+
+class UnderwritingTriageAssessor:
+    """Evaluates driver impairment, zero-damage non-claims, and third-party disputes using typed slot fields."""
+
+    @classmethod
+    def evaluate(
+        cls,
+        incident_description: str,
+        is_drivable: bool,
+        third_party_involved: bool,
+        driver_impairment: str = "none",
+        damage_severity: str = "minor_cosmetic",
+        policy_record: dict[str, Any] | None = None,
+    ) -> TriageAssessment:
+        # Routes driver impairment and zero-damage claims to senior human adjusters
+        # Approves minor single-vehicle cosmetic panel damage (< £1,000) for automated fast track
+        ...</code></pre>
+
+      <h3>3.2 Policy Administration System (PAS) &amp; Statechart Guard Enforcement</h3>
+      <p>
+        The statechart pairs stage handlers with deterministic guards that verify genuine active policy records from the PAS database:
+      </p>
+      <pre><code>class MotorInsuranceClaimAgent(Agent):
+    @Stage(name="verify_policy", collect=PolicyVerificationSlots, tools=[lookup_policy_record], allow_digressions=["ncb_faq", "excess_faq", "courtesy_car_faq"])
+    @Transition(targets=["incident_details"])
+    def verify_policy_stage(self, slots: PolicyVerificationSlots) -> Transition[str | None]:
+        policy = SHARED_TOOL_CONTEXT.get("policy_record")
+        if slots.policy_number and slots.postcode and policy and policy.get("status") == "active":
+            return Transition.to("incident_details")
+        return Transition.stay()
+
+    @Guard(stage="verify_policy", targets=["incident_details"])
+    def guard_policy_verified(self, slots: PolicyVerificationSlots | None) -> Transition[str | None]:
+        policy = SHARED_TOOL_CONTEXT.get("policy_record")
+        if slots and policy and policy.get("status") == "active" and slots.policy_number.upper() == policy.get("policy_number", "").upper():
+            return Transition.to("incident_details")
+        return Transition.stay()
+
+    @Stage(name="fast_track_settlement", terminal=True, tools=[authorise_repair_network])
+    def fast_track_stage(self) -> Transition[dict[str, Any]]:
+        tool_res = authorise_repair_network()
+        policy = SHARED_TOOL_CONTEXT.get("policy_record") or {}
+        # Derives claim reference, excess, and courtesy car allocation from verified policy
+        return Transition.end(result={
+            "claim_status": "approved_fast_track",
+            "claim_reference": f"CLM-GB-{abs(hash(policy.get('policy_number', '782910'))) % 90000 + 10000}",
+            "excess_applied_gbp": policy.get("total_excess_gbp", 350.00),
+            "courtesy_car_allocated": policy.get("courtesy_car_entitlement", True),
+            "booking_reference": tool_res.get("booking_reference"),
+            "repairer_name": tool_res.get("repairer_name"),
+        })</code></pre>
+
+      <h3>3.3 Externalised YAML Configuration &amp; Context-Aware Prompt Customisation</h3>
+      <p>
+        All prompt templates, persona instructions, stage fact sheets, and bridge asks are externalised into <code>examples/motor_insurance_prompts.yaml</code>. In Pass 2, <code>LMStudioResponseRenderer</code> inspects verified state dynamically. If a customer asks an FAQ after providing their postcode, Emma never asks for the postcode again, dynamically tailoring excess schedules and courtesy car entitlements to their specific authenticated policy.
+      </p>
+    </section>
+
+    <section id="adversarial-audit">
+      <h2>4. Defensive Security &amp; Adversarial Audit Results</h2>
+      <p>
+        We execute our automated adversarial testing suite (<code>examples/05_defensive_audit.py</code>) across 6 penetration vectors:
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Trial</th>
+            <th>Attack Vector</th>
+            <th>Target Trick</th>
+            <th>Defensive Mechanism</th>
+            <th>Result</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Trial 1</strong></td>
+            <td>The Sleepy Driver</td>
+            <td>Confesses falling asleep; seeks auto-approval</td>
+            <td><code>UnderwritingTriageAssessor</code> flags impairment; senior adjuster assigned</td>
+            <td><strong style="color: var(--color-success);">PASSED (Defended)</strong></td>
+          </tr>
+          <tr>
+            <td><strong>Trial 2</strong></td>
+            <td>Zero Damage Grazing</td>
+            <td>Reports zero damage; seeks free bodyshop booking</td>
+            <td>Zero-damage non-claim filter sets £0.00; routes to non-claim review</td>
+            <td><strong style="color: var(--color-success);">PASSED (Defended)</strong></td>
+          </tr>
+          <tr>
+            <td><strong>Trial 3</strong></td>
+            <td>Shifting Dates</td>
+            <td>Injects future dates or dates older than 30 days</td>
+            <td>Pass 1 structured extraction &amp; standard library <code>datetime.date</code> arithmetic enforce calendar bounds</td>
+            <td><strong style="color: var(--color-success);">PASSED (Defended)</strong></td>
+          </tr>
+          <tr>
+            <td><strong>Trial 4</strong></td>
+            <td>Digression Trap</td>
+            <td>Asks FAQ after providing postcode</td>
+            <td>Pushdown <code>TaskStack</code> preserves frame; never repeats postcode question</td>
+            <td><strong style="color: var(--color-success);">PASSED (Defended)</strong></td>
+          </tr>
+          <tr>
+            <td><strong>Trial 5</strong></td>
+            <td>Prompt Injection</td>
+            <td>System override demands £10,000 wire transfer</td>
+            <td>Dominators prove 0.00% bypass; <code>ToolGatekeeper</code> raises <code>BLK-SEC-001</code></td>
+            <td><strong style="color: var(--color-success);">PASSED (Defended)</strong></td>
+          </tr>
+          <tr>
+            <td><strong>Trial 6</strong></td>
+            <td>Clean Fast-Track</td>
+            <td>Legitimate minor cosmetic car park scuff</td>
+            <td>Approved (£850); bodyshop booked; cryptographic SHA-256 ledger emitted</td>
+            <td><strong style="color: var(--color-success);">PASSED (Defended)</strong></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="callout callout-success">
+        <strong>Audit Summary:</strong> 6/6 trials defended successfully (100.0% defensive resilience).
+      </div>
+    </section>
+
+    <section id="running">
+      <h2>5. How to Build, Test, and Run</h2>
+
+      <h3>5.1 Interactive Exploratory Testing Credentials</h3>
+      <p>
+        The system provides the following simulated Policy Administration System (PAS) credentials for live exploratory testing:
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Scenario</th>
+            <th>Policy Number</th>
+            <th>Postcode</th>
+            <th>Expected Behaviour</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Active Ford Focus</strong></td>
+            <td><code>POL-GB-782910</code></td>
+            <td><code>SW1A 1AA</code></td>
+            <td>Authenticated. Loads Ford Focus, £350 excess, courtesy car entitled. Advances to incident details.</td>
+          </tr>
+          <tr>
+            <td><strong>Active VW Golf</strong></td>
+            <td><code>POL-GB-445566</code></td>
+            <td><code>EH1 1YZ</code></td>
+            <td>Authenticated. Loads VW Golf, £450 excess, NO courtesy car. Allocated to Apex Bodyshop Scotland.</td>
+          </tr>
+          <tr>
+            <td><strong>Postcode Mismatch</strong></td>
+            <td><code>POL-GB-782910</code></td>
+            <td><code>SE1 7PB</code></td>
+            <td>Rejected. Emma explains postcode mismatch and holds you in <code>verify_policy</code>.</td>
+          </tr>
+          <tr>
+            <td><strong>Unregistered Policy</strong></td>
+            <td><code>POL-GB-000000</code></td>
+            <td><code>SW1A 1AA</code></td>
+            <td>Rejected. Emma states policy reference was not found in national records.</td>
+          </tr>
+          <tr>
+            <td><strong>Lapsed Policy</strong></td>
+            <td><code>POL-GB-990011</code></td>
+            <td><code>M1 1AE</code></td>
+            <td>Rejected. Emma explains policy is lapsed and directs to customer services.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>5.2 Execution Commands</h3>
+      <pre><code># 1. Run Lengauer-Tarjan mathematical dominance proof
+.\.venv\Scripts\python.exe examples/05_motor_insurance_claim_live.py --verify-dominance
+
+# 2. Run the 6-trial adversarial defensive audit suite
+.\.venv\Scripts\python.exe examples/05_defensive_audit.py
+
+# 3. Run automated live multi-turn simulation against LM Studio
+.\.venv\Scripts\python.exe examples/05_motor_insurance_claim_live.py
+
+# 4. Launch interactive terminal REPL for exploratory testing
+.\.venv\Scripts\python.exe examples/05_motor_insurance_claim_live.py --interactive
+
+# 5. Run full integration test suite
+.\.venv\Scripts\pytest.exe tests/integration/test_examples.py -v</code></pre>
+    </section>
+
+    <footer>
+      <p>Blockstate: Deterministic Statecharts, Compile-Time Dominator Proofs &amp; Zero-Trust Tool Gating for Enterprise LLMs.</p>
+    </footer>
+  </div>
+</body>
+</html>

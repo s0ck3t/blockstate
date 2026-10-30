@@ -19,6 +19,7 @@ runner = CliRunner()
         "examples/02_banking_kyc_dominator.py",
         "examples/03_healthcare_hipaa_vault.py",
         "examples/04_langchain_subflow_handoff.py",
+        "examples/05_motor_insurance_claim_live.py",
     ],
 )
 def test_reference_agent_execution(example_script: str) -> None:
@@ -48,10 +49,11 @@ def test_reference_agent_execution(example_script: str) -> None:
         "examples/02_banking_kyc_dominator.py",
         "examples/03_healthcare_hipaa_vault.py",
         "examples/04_langchain_subflow_handoff.py",
+        "examples/05_motor_insurance_claim_live.py",
     ],
 )
 def test_reference_agents_pass_blockstate_check(example_script: str) -> None:
-    """Verify that all four reference agents pass static offline blockstate check."""
+    """Verify that all five reference agents pass static offline blockstate check."""
     result = runner.invoke(app, ["check", example_script])
     assert result.exit_code == 0
     assert "Declarative Control Grammar Verified" in result.output
@@ -70,3 +72,38 @@ def test_banking_kyc_dominator_verification_via_cli() -> None:
     )
     assert result.exit_code == 0
     assert "Lengauer-Tarjan Dominance Certified" in result.output
+
+
+def test_motor_insurance_dominator_verification_via_cli() -> None:
+    """Verify that reference agent 5 passes Lengauer-Tarjan dominance proof via CLI."""
+    result = runner.invoke(
+        app,
+        [
+            "verify",
+            "examples/05_motor_insurance_claim_live.py",
+            "--dominates",
+            "verify_policy -> fast_track_settlement",
+        ],
+    )
+    assert result.exit_code == 0
+    assert "Lengauer-Tarjan Dominance Certified" in result.output
+
+
+def test_motor_insurance_defensive_audit() -> None:
+    """Verify that all 6 adversarial trials in reference agent 5 pass defensive audit."""
+    script_path = Path("examples/05_defensive_audit.py")
+    assert script_path.exists(), f"Audit script not found: {script_path}"
+
+    proc = subprocess.run(
+        [sys.executable, str(script_path)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert proc.returncode == 0, (
+        f"Defensive audit failed:\n"
+        f"STDOUT:\n{proc.stdout}\n"
+        f"STDERR:\n{proc.stderr}"
+    )
+    assert "DEFENSIVE AUDIT SUMMARY: 6/6 TRIALS DEFENDED (100.0%)" in proc.stdout
