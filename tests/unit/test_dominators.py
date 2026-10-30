@@ -3,6 +3,7 @@
 from collections import deque
 from collections.abc import Iterable, Mapping
 
+import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
@@ -64,6 +65,7 @@ def _brute_force_dominators(root: str, graph: Mapping[str, Iterable[str]]) -> di
     return doms
 
 
+@pytest.mark.patent_invariant
 def test_lengauer_tarjan_linear_chain() -> None:
     """Verify dominator computation on a linear chain: A -> B -> C -> D."""
     graph = {
@@ -82,6 +84,7 @@ def test_lengauer_tarjan_linear_chain() -> None:
     assert tree["C"] == ("D",)
 
 
+@pytest.mark.patent_invariant
 def test_lengauer_tarjan_diamond_graph() -> None:
     """Verify dominator computation on a diamond graph:
     A -> B, A -> C
@@ -102,6 +105,7 @@ def test_lengauer_tarjan_diamond_graph() -> None:
     assert idoms["D"] == "A"
 
 
+@pytest.mark.patent_invariant
 def test_lengauer_tarjan_complex_control_flow_with_cycle() -> None:
     """Verify Lengauer-Tarjan on complex control flow graph with back-edges / loops."""
     # Lengauer & Tarjan (1979) classic paper example
@@ -127,6 +131,7 @@ def test_lengauer_tarjan_complex_control_flow_with_cycle() -> None:
     assert lt_doms == bf_doms
 
 
+@pytest.mark.patent_invariant
 def test_verify_dominance_holds_and_fails() -> None:
     """Verify verify_dominance correctly validates invariants and provides counterexamples."""
     graph = {
@@ -156,6 +161,7 @@ def test_verify_dominance_holds_and_fails() -> None:
     assert "Violating bypass path: start -> fast_bypass -> payout" in res_bypass.summary()
 
 
+@pytest.mark.patent_invariant
 def test_find_counterexample_path_edge_cases() -> None:
     """Verify counterexample path tracer handles root and direct edges."""
     graph = {"A": ["B", "C"], "B": ["D"], "C": ["D"], "D": []}

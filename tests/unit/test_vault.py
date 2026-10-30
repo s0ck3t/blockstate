@@ -42,6 +42,7 @@ def test_vault_cipher_encryption_and_decryption_with_valid_aad() -> None:
     assert decrypted == vault_map
 
 
+@pytest.mark.patent_invariant
 def test_vault_cipher_session_triple_aad_binding() -> None:
     """Verify AES-256-GCM encryption with session_id, schema_version, revision_id."""
     cipher = VaultCipher()
@@ -63,6 +64,7 @@ def test_vault_cipher_session_triple_aad_binding() -> None:
     assert decrypted == vault_map
 
 
+@pytest.mark.patent_invariant
 def test_vault_cipher_decryption_fails_with_altered_aad() -> None:
     """Verify decryption fails when AAD revision or session differs."""
     cipher = VaultCipher()
@@ -76,6 +78,7 @@ def test_vault_cipher_decryption_fails_with_altered_aad() -> None:
     assert exc_info.value.code == "BLK-SEC-001"
 
 
+@pytest.mark.patent_invariant
 def test_vault_cipher_decryption_fails_with_corrupted_ciphertext() -> None:
     """Verify decryption fails when ciphertext bytes or authentication tag are tampered."""
     cipher = VaultCipher()
@@ -219,6 +222,7 @@ def test_pii_vault_constructor_variants() -> None:
     assert repr(v3).startswith("PIIVault")
 
 
+@pytest.mark.patent_invariant
 def test_pii_vault_sanitise_and_detokenise_matrix_scenarios() -> None:
     """Verify table scenarios from specification intent contract."""
     vault = PIIVault()

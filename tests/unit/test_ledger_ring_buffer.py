@@ -124,6 +124,7 @@ async def test_ring_buffer_non_blocking_enqueue(tmp_path: Any) -> None:
 
 
 @pytest.mark.asyncio
+@pytest.mark.patent_invariant
 async def test_ring_buffer_monotonic_session_ordering(tmp_path: Any) -> None:
     """Verify records for a session are dispatched in strict ascending turn sequence."""
     sink = InMemoryLedgerSink()
@@ -253,6 +254,7 @@ async def test_ring_buffer_storage_outbox_clearing(tmp_path: Any) -> None:
 
 
 @pytest.mark.asyncio
+@pytest.mark.patent_invariant
 async def test_ring_buffer_wal_spill_on_sink_failure(tmp_path: Any) -> None:
     """Verify failing sink triggers WAL spill to .blockstate/wal/ledger.wal during drain."""
     failing_sink = FailingSink(fail_append=True)

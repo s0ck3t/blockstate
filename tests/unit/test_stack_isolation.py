@@ -36,6 +36,7 @@ def test_session_state_crud() -> None:
     assert "trusted" in ro["tags"]
 
 
+@pytest.mark.patent_invariant
 def test_readonly_session_view_immutability() -> None:
     """Verify ReadOnlySessionView is completely frozen and prevents in-place mutations."""
     view = ReadOnlySessionView.create(
@@ -104,6 +105,7 @@ def test_task_frame_slot_navigation_and_copy() -> None:
     assert copied.get_slot("user.profile.age") == 30
 
 
+@pytest.mark.patent_invariant
 def test_task_stack_pushdown_depth_limit() -> None:
     """Verify TaskStack enforces maximum stack depth of 6 and raises StackOverflowError."""
     stack = TaskStack(max_stack_depth=6)
@@ -164,6 +166,7 @@ def test_task_stack_iteration_and_repr() -> None:
     assert "TaskStack(depth=2, max_depth=6" in repr(stack)
 
 
+@pytest.mark.patent_invariant
 def test_parent_frame_rejects_child_mutation_without_overrides() -> None:
     """Verify parent TaskFrame rejects child mutation when allow_slot_overrides is False."""
     parent = TaskFrame(stage_id="parent_stage", allow_slot_overrides=False, slots={"amount": 50})
@@ -177,6 +180,7 @@ def test_parent_frame_rejects_child_mutation_without_overrides() -> None:
     assert parent.get_slot("amount") == 50
 
 
+@pytest.mark.patent_invariant
 def test_parent_frame_accepts_child_mutation_with_allow_slot_overrides() -> None:
     """Verify parent TaskFrame applies child mutation when allow_slot_overrides is True."""
     parent = TaskFrame(stage_id="parent_stage", allow_slot_overrides=True, slots={"amount": 50})
@@ -189,6 +193,7 @@ def test_parent_frame_accepts_child_mutation_with_allow_slot_overrides() -> None
     assert parent.is_locked("note")
 
 
+@pytest.mark.patent_invariant
 def test_parent_frame_accepts_forced_child_mutation() -> None:
     """Verify parent TaskFrame applies child mutation when force is True."""
     parent = TaskFrame(stage_id="parent_stage", allow_slot_overrides=False, slots={"amount": 50})

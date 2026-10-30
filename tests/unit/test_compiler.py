@@ -84,6 +84,7 @@ class CompliantClaimsAgent(Agent):
 """
 
 
+@pytest.mark.patent_invariant
 def test_compiler_extract_valid_statechart() -> None:
     """Verify static extraction of stages, transitions, tools, and digressions."""
     graph = extract_statechart_from_source(VALID_AGENT_SOURCE, filename="agent.py")
@@ -115,6 +116,7 @@ def test_compiler_extract_valid_statechart() -> None:
     assert "guard_check" in graph.guards["collect_details"]
 
 
+@pytest.mark.patent_invariant
 def test_compiler_blockstate_e014_dynamic_transition_target() -> None:
     """Verify dynamic transition destination raises [Blockstate E014] with exact diagnostic."""
     dynamic_source = """
@@ -135,6 +137,7 @@ class DynamicAgent(Agent):
     assert "Transitions must reference static State definitions" in msg
 
 
+@pytest.mark.patent_invariant
 def test_compiler_blockstate_e014_reflection_getattr() -> None:
     """Verify reflection using getattr() raises [Blockstate E014]."""
     getattr_source = """
@@ -154,6 +157,7 @@ class ReflectionAgent(Agent):
     assert "Dynamic transition destination detected at reflection.py:7." in msg
 
 
+@pytest.mark.patent_invariant
 def test_compiler_blockstate_e014_field_validator_transition() -> None:
     """Verify Transition inside @field_validator raises [Blockstate E014]."""
     validator_source = """
@@ -178,6 +182,7 @@ class SlotModel(BaseModel):
     assert "Dynamic transition destination detected at validator.py:12." in msg
 
 
+@pytest.mark.patent_invariant
 def test_compiler_unreachable_dead_stage() -> None:
     """Verify unreachable stages without incoming transitions raise UnreachableStageError."""
     dead_stage_source = """
@@ -257,6 +262,7 @@ def test_compiler_syntax_error_handling() -> None:
     assert "Python syntax error" in str(exc_info.value)
 
 
+@pytest.mark.patent_invariant
 def test_compiler_exporters() -> None:
     """Verify Mermaid and JSON exporters produce valid representations."""
     graph = extract_statechart_from_source(VALID_AGENT_SOURCE, filename="agent.py")

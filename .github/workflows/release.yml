@@ -1,9 +1,12 @@
-name: Publish to PyPI
+name: Publish to PyPI (Manual Confirmation Only)
 
 on:
-  release:
-    types: [published]
   workflow_dispatch:
+    inputs:
+      confirm_publish:
+        description: "Type PUBLISH_TO_PYPI to confirm publishing the full package to PyPI"
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -11,6 +14,7 @@ permissions:
 jobs:
   pypi-publish:
     name: Build and publish distribution to PyPI
+    if: github.event.inputs.confirm_publish == 'PUBLISH_TO_PYPI'
     runs-on: ubuntu-latest
     environment:
       name: pypi

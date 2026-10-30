@@ -130,6 +130,7 @@ def test_session_checkpoint_and_turn_envelope_immutability() -> None:
         envelope.turn_index = 2
 
 
+@pytest.mark.patent_invariant
 def test_wire_dto_turn_yield_immutability() -> None:
     """Verify BlockstateTurnYield rejects field mutation and extra attributes."""
     yield_dto = BlockstateTurnYield(
@@ -148,6 +149,7 @@ def test_wire_dto_turn_yield_immutability() -> None:
         BlockstateTurnYield.model_validate({"session_id": "s1", "extra_field": "bad"})
 
 
+@pytest.mark.patent_invariant
 def test_wire_dto_turn_aborted_immutability() -> None:
     """Verify BlockstateTurnAborted rejects field mutation and unrecognised attributes."""
     aborted = BlockstateTurnAborted(
@@ -171,6 +173,7 @@ def test_wire_dto_turn_aborted_immutability() -> None:
         })
 
 
+@pytest.mark.patent_invariant
 def test_wire_dto_turn_complete_generic_typing_and_immutability() -> None:
     """Verify BlockstateTurnComplete preserves generic typing and enforces immutability."""
     result_data = {"claim_id": "CLM-9999", "status": "approved"}
@@ -267,6 +270,7 @@ class DummyLedgerSink:
         pass
 
 
+@pytest.mark.patent_invariant
 def test_ledger_protocols_and_turn_record_dto() -> None:
     """Verify LedgerSink protocol and TurnLedgerRecord DTO immutability."""
     sink = DummyLedgerSink()

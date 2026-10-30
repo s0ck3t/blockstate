@@ -78,6 +78,7 @@ def tool_returning_integer() -> int:
     return 42
 
 
+@pytest.mark.patent_invariant
 def test_build_dispatch_table_isolation() -> None:
     """Verify ToolGatekeeper creates ephemeral MappingProxyType with whitelisted tools only."""
     gatekeeper = ToolGatekeeper()
@@ -109,6 +110,7 @@ def test_tool_name_validation() -> None:
         gatekeeper.register_tool("", sync_check_balance)
 
 
+@pytest.mark.patent_invariant
 def test_build_tool_schema_types_and_omits_unwhitelisted() -> None:
     """Verify outbound tool schemas contain solely the tools whitelisted by the stage."""
     gatekeeper = ToolGatekeeper()
@@ -154,6 +156,7 @@ async def test_invoke_whitelisted_async_tool() -> None:
     assert result == {"user_id": "USR-1", "name": "John Doe"}
 
 
+@pytest.mark.patent_invariant
 def test_invoke_unwhitelisted_tool_raises_security_violation() -> None:
     """Verify invoking an unwhitelisted tool immediately raises SecurityViolationError."""
     gatekeeper = ToolGatekeeper()
@@ -221,6 +224,7 @@ def test_invoke_sync_with_async_tool_raises_type_error() -> None:
 
 
 @pytest.mark.asyncio
+@pytest.mark.patent_invariant
 async def test_detokenise_parameter_injection_and_context() -> None:
     """Verify ToolGatekeeper automatically detokenises Detokenise[T] arguments using PIIVault."""
     vault = PIIVault()
@@ -288,6 +292,7 @@ async def test_detokenise_parameter_injection_and_context() -> None:
 
 
 @pytest.mark.asyncio
+@pytest.mark.patent_invariant
 async def test_tool_return_value_is_resanitised() -> None:
     """Verify ToolGatekeeper re-sanitises string and dict outputs before exiting."""
     vault = PIIVault()

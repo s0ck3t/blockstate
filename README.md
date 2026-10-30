@@ -11,9 +11,10 @@
 [![Coverage: >=95% Core / >=90% Repo](https://img.shields.io/badge/coverage-%E2%89%A595%25%20core%20%7C%20%E2%89%A590%25%20branch-16a34a.svg)](#enterprise-testing-coverage--interface-contracts)
 [![Architecture: Hexagonal import-linter](https://img.shields.io/badge/architecture-hexagonal%20ports%20%26%20adapters-7c3aed.svg)](docs/architecture/ARCHITECTURE-SPINE.md)
 [![Security: Zero-Trust & Gitleaks](https://img.shields.io/badge/security-zero--trust%20%7C%20PIIVault-dc2626.svg)](SECURITY.md)
-[![Licences: 100% Permissive Audited](https://img.shields.io/badge/licences-MIT%20%2F%20Apache--2.0%20verified-0284c7.svg)](THIRD_PARTY_LICENSES.md)
+[![Patent: UK Patent Pending](https://img.shields.io/badge/patent-UK%20Patent%20Pending-b45309.svg)](PATENTS.md)
+[![Licence: Source-Available / Commercial](https://img.shields.io/badge/licence-Eval%20Free%20%7C%20Commercial%20Prod-0284c7.svg)](LICENSE)
 
-[**Quick Start**](#60-second-quick-start) · [**Why Blockstate?**](#why-blockstate) · [**4 Domain Examples**](#domain-examples-4-complete-walkthroughs) · [**CLI, DCG & Dominator Proofs**](#cli-reference-declarative-control-grammar--compile-time-verification) · [**Testing & Contracts**](#enterprise-testing-coverage--interface-contracts) · [**Subcomponent Licences**](THIRD_PARTY_LICENSES.md)
+[**Quick Start**](#60-second-quick-start) · [**Why Blockstate?**](#why-blockstate) · [**4 Domain Examples**](#domain-examples-4-complete-walkthroughs) · [**CLI, DCG & Dominator Proofs**](#cli-reference-declarative-control-grammar--compile-time-verification) · [**Testing & Contracts**](#enterprise-testing-coverage--interface-contracts) · [**Licensing & Patent Notice**](#licensing-uk-patent-pending--commercial-production)
 
 </div>
 
@@ -596,9 +597,18 @@ See [**SECURITY.md**](SECURITY.md) for the complete zero-trust threat model and 
 
 ---
 
-## 📜 Subcomponent Licences & Supply-Chain Governance
+## ⚖️ Licensing, UK Patent Pending & Commercial Production
 
-Every runtime and optional subcomponent of `blockstate` is audited and restricted in CI (`pip-licenses` + CycloneDX SBOM generation) to **permissive enterprise-approved licences (`MIT`, `Apache-2.0`, `BSD-3-Clause`, `PSF-2.0`)** with **zero copyleft (`GPL`/`AGPL`/`LGPL`) dependencies**.
+**Blockstate (`blockstate`)** is **UK Patent Pending** (*"Process execution control system"*, filed with the United Kingdom Intellectual Property Office under Section 62(1) of the UK Patents Act 1977) and is distributed under a **Source-Available & Commercial Dual Licence** (see [**`LICENSE`**](LICENSE) and [**`PATENTS.md`**](PATENTS.md)):
+
+| Tier | Permitted Scope | Cost |
+| :--- | :--- | :--- |
+| **1. Community, Dev & Evaluation Tier** | Local development, academic research, open-source CI/CD verification (`blockstate verify`), and up to 90 days of internal staging evaluation/prototyping | **Free (£0)** |
+| **2. Commercial Production & Enterprise Tier** | Live commercial production deployments (FinTech, InsurTech, HealthTech, Telco, Enterprise), managed cloud hosting, or SaaS embedding | **Commercial Enterprise & Patent Licence** |
+
+### Third-Party Dependency Supply-Chain Governance
+
+Every third-party runtime and optional dependency used by `blockstate` is audited and restricted in CI (`pip-licenses` + CycloneDX SBOM generation) to **permissive enterprise-approved licences (`MIT`, `Apache-2.0`, `BSD-3-Clause`, `PSF-2.0`)** with **zero copyleft (`GPL`/`AGPL`/`LGPL`) dependencies**:
 
 | Component Layer | Packages | SPDX Licences | Copyleft Risk |
 | :--- | :--- | :--- | :--- |
@@ -613,8 +623,18 @@ For the complete package-by-package version, licence, and upstream repository ma
 
 ---
 
+## 🤝 Community, Red-Teaming & Enterprise Pilots
+
+- **Red-Team Your Agent Graph (`blockstate verify`)**: Run `blockstate verify` against your regulated workflow statecharts to detect unreachable states and Lengauer-Tarjan dominator bypass paths in `< 50ms`, and share anonymised statechart patterns in **GitHub Discussions**.
+- **Enterprise Production Pilots & Commercial Licensing**: Building a regulated AI workflow in **retail banking (FCA SYSC 13.7)**, **insurance claims (FNOL)**, **healthcare triage (NHS / HIPAA)**, or **telecommunications**? Open an issue or contact the maintainer to arrange a **Commercial Enterprise & Patent Licence** or a **Regulated AI Enclave Implementation Pilot**.
+
+---
+
 ## 🗺️ Architectural Documentation & Artifacts
 
+- [**Project Licence (`LICENSE`)**](LICENSE) & [**Statutory UK Patent Pending Notice (`PATENTS.md`)**](PATENTS.md) — Dual-licensing terms and UK Patents Act 1977 s.62(1) notice.
+- [**Product & Engineering Roadmap (`docs/ROADMAP.md`)**](docs/ROADMAP.md) — Prioritised `v1.1`, `v1.2`, and `v2.0+` feature backlog (`blockstate studio` visual AST canvas & `.py` codegen, `blockstate init`, Semantic Kernel/AutoGen/Bedrock enclaves, Redis/MSSQL/DynamoDB drivers, and `blockstate fuzz`).
+- [**Enterprise Motor Insurance Claims Tutorial & Adversarial Audit (`motor_insurance_claim_tutorial.md`)**](docs/tutorials/motor_insurance_claim_tutorial.md) ([**HTML Edition**](docs/tutorials/motor_insurance_claim_tutorial.html) · [**Live Agent (`05_motor_insurance_claim_live.py`)**](examples/05_motor_insurance_claim_live.py) · [**6-Trial Penetration Suite (`05_defensive_audit.py`)**](examples/05_defensive_audit.py)) — Full worked enterprise FNOL walkthrough with zero-stub PAS verification, System-1 semantic routing, YAML prompt isolation, and Lengauer-Tarjan dominator proofs.
 - [**Architecture Spine (`ARCHITECTURE-SPINE.md`)**](docs/architecture/ARCHITECTURE-SPINE.md) — The normative build substrate fixing all 14 Architectural Decisions (`AD-1` to `AD-14`), Hexagonal boundaries, wire protocols, and stack versions.
 - [**Interactive Visual Architecture Deck (`architecture-deck.html`)**](docs/architecture/architecture-deck.html) — Self-contained HTML+SVG executive and engineering walkthrough deck.
 - [**Product Requirements Document (`prd.md`)**](docs/spec/prd.md) — Functional requirements (`FR-1` to `FR-22`), user journeys (`UJ-1` to `UJ-3`), and regulatory mapping (`EU AI Act`, `UK FCA`, `HIPAA`, `SOC 2`).

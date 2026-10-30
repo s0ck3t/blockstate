@@ -1,4 +1,4 @@
-﻿| Name                      | Version         | License                                                                        |
+| Name                      | Version         | License                                                                        |
 |---------------------------|-----------------|--------------------------------------------------------------------------------|
 | CacheControl              | 0.14.4          | Apache-2.0                                                                     |
 | Jinja2                    | 3.1.6           | BSD License                                                                    |
@@ -20,7 +20,7 @@
 | asyncpg                   | 0.32.0          | Apache-2.0                                                                     |
 | attrs                     | 26.1.0          | MIT                                                                            |
 | bandit                    | 1.9.4           | Apache-2.0                                                                     |
-| blockstate                | 0.0.1a1         | Apache-2.0                                                                     |
+| blockstate                | 0.0.1a1         | Source-Available Dual Licence (see LICENSE & PATENTS.md)                       |
 | boolean.py                | 5.0             | BSD-2-Clause                                                                   |
 | boto3                     | 1.43.119        | Apache-2.0                                                                     |
 | botocore                  | 1.43.119        | Apache-2.0                                                                     |

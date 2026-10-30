@@ -1,5 +1,7 @@
 """Unit tests for PII regex patterns and mathematical checksum detectors."""
 
+import pytest
+
 from blockstate.security.pii_patterns import (
     PIIMatch,
     detect_card,
@@ -16,6 +18,7 @@ from blockstate.security.pii_patterns import (
 )
 
 
+@pytest.mark.patent_invariant
 def test_validate_nhs_mod11() -> None:
     """Verify UK NHS number Modulus 11 validation."""
     # 9876543210 -> sum = 330, rem = 0, check = 11 - 0 = 11 -> 0 == d10 -> True
@@ -41,6 +44,7 @@ def test_validate_nhs_mod11() -> None:
     assert validate_nhs_mod11("0000000405") is False
 
 
+@pytest.mark.patent_invariant
 def test_validate_luhn() -> None:
     """Verify payment card Luhn (Mod 10) checksum algorithm."""
     # Valid 16-digit card
@@ -146,6 +150,7 @@ def test_detect_pii_spans_empty_and_filtering() -> None:
     assert email_only[0].category == "EMAIL"
 
 
+@pytest.mark.patent_invariant
 def test_detect_pii_spans_pre_existing_vault_token_protection() -> None:
     """Verify pre-existing <VAULT:...> tokens are not matched or mutated."""
     text = "Already vaulted token <VAULT:POSTCODE_01> and NINo QQ123456C"

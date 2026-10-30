@@ -350,13 +350,13 @@ The system must enforce strict scoping between `Global SessionState` (cross-flow
 - Formal `StorageBackend` SPI with three canonical v1 backends: **In-Memory** (unit testing/CI), **Local SQLite with WAL mode** (local dev/edge), and **PostgreSQL via async SQLAlchemy** (cloud production).
 - First-class Outer Orchestrator `as_tool()` Enclave Adapters (`from blockstate.adapters.langchain import as_tool`, `Agent.as_tool()`, `run_as_subflow()`).
 
-### 6.2 Out of Scope for MVP (Deferred to v1.2+ / v2 / v3)
-- **v1.2+ Deferred Storage Backends (via `StorageBackend` SPI):** **Redis**, **Microsoft SQL Server**, and **AWS DynamoDB** (deferred from v1 to v1.2+ to avoid 5-backend connection-pool, migration, and concurrency-lock maintenance drag during v1 core build).
-- **v2 Extended Enterprise Database Adapters:** Oracle Database and Azure Cosmos DB (deferred to v2).
-- Standalone interactive React web visualiser (deferred to v2 in favour of Mermaid, CLI trace replay, and OpenTelemetry).
-- Native enterprise message bus streaming (AWS SQS, Apache Kafka, Google Cloud Pub/Sub) for `TurnLedger` (deferred to v2; PostgreSQL/S3 suffice for v1).
-- Distributed multi-agent inter-process bus (focus on single-agent deterministic statecharts with outer orchestrator enclave handoff in v1).
-- Automatic fuzzing test harness (`blockstate fuzz`) for synthetic adversarial conversation generation (v2 roadmap).
+### 6.2 Post-MVP Roadmap (`v1.1`, `v1.2+`, `v2.0+` — see [`docs/ROADMAP.md`](../ROADMAP.md))
+- **v1.1 Code-First Visual Statechart Studio (`blockstate studio`) & CLI Scaffolder (`blockstate init`):** Interactive local web canvas that renders Python DCG statecharts, runs live `<5ms` Lengauer-Tarjan dominator verification with visual counterexample paths, simulates multi-turn `TaskStack` / `PIIVault` execution, and generates clean `.py` source files (Tier 1 in `v1.1`; bidirectional `libcst` surgical AST/CST sync as Tier 2 in `v1.2`), plus `blockstate init --template` project scaffolding.
+- **v1.1 Extended Outer Orchestrator Enclave Adapters:** First-class `as_tool()` wrappers for **Microsoft Semantic Kernel**, **AutoGen**, and **AWS Bedrock Agents** alongside `blockstate.adapters.langchain`.
+- **v1.2+ Deferred Storage Backends (via `StorageBackend` SPI) & Dialogue Repair Utilities:** **Redis** (`RedisStorageBackend`), **Microsoft SQL Server** (`MSSQLStorageBackend`), and **AWS DynamoDB** (`DynamoDBStorageBackend`), plus built-in Pass 2 `FieldValidationError` dialogue repair prompt builders.
+- **v2.0+ Extended Enterprise Database Adapters:** Oracle Database and Azure Cosmos DB (deferred to v2.0).
+- **v2.0+ Native Enterprise Message Bus Streaming:** AWS SQS, Apache Kafka, and Google Cloud Pub/Sub `LedgerSink` drivers for `TurnLedger` (PostgreSQL/S3/File ship in v1.0).
+- **v2.0+ Automated Adversarial Conversation Fuzzer (`blockstate fuzz`) & Polyglot SDKs:** Synthetic multi-turn adversarial conversation and prompt-injection fuzzer (`blockstate fuzz`), plus TypeScript, Go, and Rust enclave SDKs.
 
 ---
 

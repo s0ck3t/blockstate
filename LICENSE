@@ -1,0 +1,90 @@
+BLOCKSTATE SOURCE-AVAILABLE & COMMERCIAL DUAL LICENCE
+Version 1.0 (October 2026)
+
+Copyright (c) 2026 James Tyas and Blockstate Contributors. All Rights Reserved.
+PATENT NOTICE: This software and its underlying architecture are the subject of a
+pending United Kingdom Patent Application ("Process execution control system",
+filed 28 October 2026). See PATENTS.md for statutory patent notice details under
+Section 62(1) of the United Kingdom Patents Act 1977.
+
+================================================================================
+OVERVIEW OF DUAL-LICENSING MODEL
+================================================================================
+
+Blockstate ("the Software") is distributed under a dual-licensing model designed
+to support open inspection, developer prototyping, academic research, and
+community contribution, while requiring a commercial licence for production
+commercial deployment:
+
+1. COMMUNITY, DEVELOPMENT & EVALUATION TIER (FREE):
+   You may view, download, modify, execute, and test the Software free of charge
+   solely for Non-Commercial Use, Academic Research, Local Development,
+   Automated CI/CD Verification (`blockstate verify`), and Time-Bounded Internal
+   Evaluation/Prototyping (see Section 1).
+
+2. COMMERCIAL PRODUCTION & ENTERPRISE TIER (PAID COMMERCIAL LICENCE):
+   Any deployment of the Software in a live commercial production environment,
+   regulated customer-facing or internal enterprise workflow, or commercial
+   hosted/managed service requires a separate written Commercial Enterprise and
+   Patent Licence Agreement (see Section 2).
+
+================================================================================
+TERMS AND CONDITIONS
+================================================================================
+
+1. GRANT OF COMMUNITY, DEVELOPMENT AND EVALUATION LICENCE
+Subject to the terms and conditions of this Licence, the Licensor hereby grants
+You a non-exclusive, non-transferable, royalty-free, revocable copyright licence
+to copy, modify, and execute the Software solely for the following Permitted
+Purposes:
+  (a) Personal, educational, or academic research use;
+  (b) Open-source software integration testing and automated compile-time
+      verification (`blockstate verify`) in continuous integration pipelines;
+  (c) Local developer prototyping, benchmarking, security auditing, and
+      non-production staging evaluation for a period of up to ninety (90) days
+      for the purpose of evaluating whether to obtain a Commercial Licence; or
+  (d) Community contributions (pull requests, bug fixes, and adapters) submitted
+      back to the official upstream repository.
+
+2. RESTRICTIONS ON COMMERCIAL PRODUCTION AND MANAGED SERVICES
+Absent a separate written Commercial Enterprise and Patent Licence Agreement
+executed with the Licensor, You may NOT:
+  (a) Deploy, operate, or execute the Software in a commercial production
+      environment processing live customer, financial, insurance, healthcare,
+      telecommunications, or enterprise operational transactions;
+  (b) Offer, host, or provide the Software (or any derivative work thereof) to
+      third parties as a managed service, Software-as-a-Service (SaaS),
+      Platform-as-a-Service (PaaS), API gateway, or compliance-as-a-service
+      offering;
+  (c) Remove, alter, or obscure any copyright notices, licence headers, or the
+      statutory patent pending notices contained in `LICENSE` or `PATENTS.md`.
+
+3. EXPLICIT RESERVATION OF PATENT RIGHTS (NO IMPLIED PATENT GRANT)
+Unlike the Apache License 2.0, this Licence is a conditional copyright licence
+only and DOES NOT GRANT any express or implied licence under any patent or
+patent application owned or controlled by the Licensor (including, without
+limitation, United Kingdom Patent Application "Process execution control system"
+and any international Paris Convention, PCT, EPO, or USPTO counterparts).
+
+A narrow, revocable covenant not to sue under the Licensor's applicable patent
+claims applies strictly and exclusively while You are operating within the scope
+of the Permitted Purposes in Section 1. Any commercial production use outside
+Section 1 without a valid Commercial Enterprise and Patent Licence Agreement is
+strictly unauthorised under both copyright and patent law.
+
+4. DEFENSIVE RETALIATION TERMINATION
+If You institute patent litigation or administrative invalidity proceedings
+against the Licensor or any contributor (including a cross-claim or counterclaim
+in a lawsuit) alleging that the Software constitutes direct or contributory
+patent infringement, then all licences and covenants granted to You under this
+Licence shall terminate automatically as of the date such litigation or
+proceeding is filed.
+
+5. DISCLAIMER OF WARRANTY AND LIMITATION OF LIABILITY
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS,
+COPYRIGHT HOLDERS, OR PATENT APPLICANTS BE LIABLE FOR ANY CLAIM, DAMAGES, OR
+OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING
+FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.

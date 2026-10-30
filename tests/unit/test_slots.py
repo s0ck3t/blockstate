@@ -48,6 +48,7 @@ from blockstate.testing.strategies import (
 # =============================================================================
 
 
+@pytest.mark.patent_invariant
 def test_unset_singleton_behaviour() -> None:
     """Verify UNSET singleton semantics, falsiness, repr, and copy preservation."""
     assert is_unset(UNSET)
@@ -88,6 +89,7 @@ def test_schema_nesting_depth_calculation() -> None:
     assert get_schema_depth(Level3) == 3
 
 
+@pytest.mark.patent_invariant
 def test_exceeding_max_nesting_depth_raises_configuration_error() -> None:
     """Verify models nested beyond max_nesting_depth=8 raise ConfigurationError (BLK-CFG-002)."""
     # Dynamically build a 9-level nested model
@@ -152,6 +154,7 @@ class TwoLevelUser(BaseModel):
     address: AddressModel
 
 
+@pytest.mark.patent_invariant
 def test_single_valid_leaf_partial_model_hydration() -> None:
     """Scenario: Single valid leaf provided: {"name": "Alice"} for model requiring name and age.
 
@@ -238,6 +241,7 @@ def test_invalid_candidate_field_sanitised_error() -> None:
         assert "ctx" not in e
 
 
+@pytest.mark.patent_invariant
 def test_sibling_slot_isolation_on_partial_failure() -> None:
     """Verify valid leaf paths lock even when a sibling field in the same turn fails validation."""
     hydrator = SlotHydrator(ValidatedCandidate)
@@ -260,6 +264,7 @@ def test_sibling_slot_isolation_on_partial_failure() -> None:
 # =============================================================================
 
 
+@pytest.mark.patent_invariant
 def test_locked_slot_overwrite_raises_unauthorised_mutation_error() -> None:
     """Scenario: Locked slot overwrite rejection.
 
@@ -386,6 +391,7 @@ class KycVerificationModel(BaseModel):
         return v
 
 
+@pytest.mark.patent_invariant
 def test_vaulted_validator_detokenisation_and_token_rebinding() -> None:
     """Scenario: Vaulted[T] validator detokenisation: {"nino": "<VAULT:NINO_01>"}.
 
@@ -412,6 +418,7 @@ def test_vaulted_validator_detokenisation_and_token_rebinding() -> None:
     assert res.target_model_instance.nino == token
 
 
+@pytest.mark.patent_invariant
 def test_vaulted_validator_error_does_not_leak_raw_pii() -> None:
     """Verify that when a Vaulted[T] field validator fails, plaintext PII is not leaked."""
     token = "<VAULT:NINO_02>"
@@ -451,6 +458,7 @@ class AgeBreachModel(BaseModel):
         return v
 
 
+@pytest.mark.patent_invariant
 def test_disqualifying_breach_error_signals_on_breach_routing() -> None:
     """Scenario: On-breach validation failure.
 
@@ -472,6 +480,7 @@ def test_disqualifying_breach_error_signals_on_breach_routing() -> None:
 # =============================================================================
 
 
+@pytest.mark.patent_invariant
 def test_all_delta_fields_complete_instantiates_strict_target_model() -> None:
     """Scenario: All delta fields complete (Delta == Empty).
 

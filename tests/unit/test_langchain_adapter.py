@@ -104,6 +104,7 @@ class SimpleRegexClassifier(IntentClassifier):
         )
 
 
+@pytest.mark.patent_invariant
 def test_as_tool_factory_and_schema() -> None:
     """Verify as_tool creates BlockstateEnclaveTool with proper schema and name."""
     tool = as_tool(SimpleMortgageAgent, name="mortgage_enclave_tool")
@@ -127,6 +128,7 @@ def test_as_tool_factory_and_schema() -> None:
 
 
 @pytest.mark.asyncio
+@pytest.mark.patent_invariant
 async def test_as_tool_multi_turn_yield_and_complete() -> None:
     """Verify multi-turn enclave flow: yield on missing slots, complete on final turn."""
     storage = InMemoryStateStore()
@@ -201,6 +203,7 @@ async def test_run_as_subflow_convenience_helper() -> None:
 
 
 @pytest.mark.asyncio
+@pytest.mark.patent_invariant
 async def test_as_tool_aborted_on_unhandled_error() -> None:
     """Verify that internal errors return BlockstateTurnAborted wire DTO."""
     tool = as_tool(SimpleMortgageAgent)

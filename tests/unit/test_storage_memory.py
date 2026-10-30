@@ -12,6 +12,7 @@ from blockstate.ports.storage import SchemaUpcaster, SessionCheckpoint
 from blockstate.testing.contracts import StateStoreContractSuite
 
 
+@pytest.mark.patent_invariant
 class TestInMemoryStorageBackendContract(StateStoreContractSuite):
     """Execute complete StateStoreContractSuite against InMemoryStorageBackend."""
 

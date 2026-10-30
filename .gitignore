@@ -114,12 +114,15 @@ models/*.safetensors
 Thumbs.db
 Desktop.ini
 
-# --- 9. Local Agent Scaffolding & Internal Research (Untracked) ---------------
+# --- 9. Local Agent Scaffolding, Patent Drafts & Internal Research (Untracked)
 .agents/
 _bmad/
 _bmad-output/
 .hyperresearch/
 research/
+docs/patent/
+UK_Patent_*.docx
+UK_Patent_*.pdf
 *.memlog.md
 CLAUDE.md
 project_brief_*.md

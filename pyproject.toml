@@ -8,7 +8,7 @@ version = "0.0.1a1"
 description = "Deterministic statecharts, compile-time dominator proofs, and zero-trust tool gating for enterprise LLMs."
 readme = "README.md"
 requires-python = ">=3.12,<3.15"
-license = { text = "Apache-2.0" }
+license = { file = "LICENSE" }
 authors = [
     { name = "Blockstate Contributors" },
 ]
@@ -25,6 +25,7 @@ Homepage = "https://github.com/s0ck3t/blockstate"
 Repository = "https://github.com/s0ck3t/blockstate"
 Issues = "https://github.com/s0ck3t/blockstate/issues"
 Documentation = "https://github.com/s0ck3t/blockstate#readme"
+PatentNotice = "https://github.com/s0ck3t/blockstate/blob/main/PATENTS.md"
 
 [project.scripts]
 blockstate = "blockstate.cli.main:app"
@@ -90,6 +91,15 @@ all = [
 [tool.hatch.build.targets.wheel]
 packages = ["src/blockstate"]
 
+[tool.hatch.build.targets.sdist]
+only-include = [
+    "src/blockstate",
+    "LICENSE",
+    "PATENTS.md",
+    "README.md",
+    "pyproject.toml",
+]
+
 [tool.ruff]
 target-version = "py312"
 line-length = 100
@@ -117,6 +127,9 @@ asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 testpaths = ["tests"]
 addopts = "-v --strict-markers"
+markers = [
+    "patent_invariant: Core architectural invariant recited in the pending UK patent application (Claims 1-15); do not remove or break without logging for the 12-month priority filing.",
+]
 
 [tool.coverage.run]
 source = ["blockstate"]
