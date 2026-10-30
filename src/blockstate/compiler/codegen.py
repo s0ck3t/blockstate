@@ -698,9 +698,7 @@ class PythonCodeGenerator:
             first_party.append("from blockstate.core.transitions import ChoicePayload")
 
         has_vaulted = any(
-            field.vaulted
-            for model in self.spec.slot_models
-            for field in model.fields
+            field.vaulted for model in self.spec.slot_models for field in model.fields
         )
         has_detokenise = any(
             any(
@@ -786,12 +784,10 @@ class PythonCodeGenerator:
                 "    context: RunContext[Any],",
             ]
             if is_security_tool:
-                lines.append("    token: Detokenise[str] = \"\",")
+                lines.append('    token: Detokenise[str] = "",')
             else:
-                lines.append("    payload: str = \"\",")
-            ret_payload = (
-                f'{{"status": "ok", "tool": "{tool_name}", "turn": context.turn_index}}'
-            )
+                lines.append('    payload: str = "",')
+            ret_payload = f'{{"status": "ok", "tool": "{tool_name}", "turn": context.turn_index}}'
             lines.extend(
                 [
                     ") -> dict[str, Any]:",
@@ -806,8 +802,7 @@ class PythonCodeGenerator:
     def _render_agent_class(self) -> str:
         agent_name = self.spec.agent_name
         doc = (
-            self.spec.description
-            or f"Declarative Control Grammar statechart agent: {agent_name}."
+            self.spec.description or f"Declarative Control Grammar statechart agent: {agent_name}."
         )
         lines: list[str] = [
             f"class {agent_name}(Agent):",

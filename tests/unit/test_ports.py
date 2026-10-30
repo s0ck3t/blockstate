@@ -95,12 +95,14 @@ def test_lease_handle_immutability() -> None:
         lease.session_id = "mutated-session"
 
     with pytest.raises(ValidationError):
-        LeaseHandle.model_validate({
-            "session_id": "session-001",
-            "lease_id": "lease-abc",
-            "expires_at_epoch_ms": 1700000000000,
-            "unrecognised_extra": True,
-        })
+        LeaseHandle.model_validate(
+            {
+                "session_id": "session-001",
+                "lease_id": "lease-abc",
+                "expires_at_epoch_ms": 1700000000000,
+                "unrecognised_extra": True,
+            }
+        )
 
 
 def test_session_checkpoint_and_turn_envelope_immutability() -> None:
@@ -165,12 +167,14 @@ def test_wire_dto_turn_aborted_immutability() -> None:
         aborted.reason = "New reason"
 
     with pytest.raises(ValidationError):
-        BlockstateTurnAborted.model_validate({
-            "session_id": "s1",
-            "error_code": "BLK-SEC-001",
-            "reason": "Unauthorised tool",
-            "unrecognised_extra": True,
-        })
+        BlockstateTurnAborted.model_validate(
+            {
+                "session_id": "s1",
+                "error_code": "BLK-SEC-001",
+                "reason": "Unauthorised tool",
+                "unrecognised_extra": True,
+            }
+        )
 
 
 @pytest.mark.patent_invariant
@@ -190,12 +194,14 @@ def test_wire_dto_turn_complete_generic_typing_and_immutability() -> None:
         complete.result = {}
 
     with pytest.raises(ValidationError):
-        BlockstateTurnComplete.model_validate({
-            "session_id": "s1",
-            "result": result_data,
-            "ledger_head_hash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-            "unrecognised_extra": True,
-        })
+        BlockstateTurnComplete.model_validate(
+            {
+                "session_id": "s1",
+                "result": result_data,
+                "ledger_head_hash": "0123456789abcdef" * 4,
+                "unrecognised_extra": True,
+            }
+        )
 
 
 def test_wire_dto_serialisation_round_trip() -> None:

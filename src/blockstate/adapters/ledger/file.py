@@ -25,9 +25,10 @@ class FileLedgerSink:
         """Scan existing file if present to initialise seen record hashes."""
         if not self.file_path.exists():
             return
-        with contextlib.suppress(OSError), open(
-            self.file_path, encoding="utf-8", errors="replace"
-        ) as f:
+        with (
+            contextlib.suppress(OSError),
+            open(self.file_path, encoding="utf-8", errors="replace") as f,
+        ):
             for line in f:
                 stripped = line.strip()
                 if not stripped:
@@ -91,4 +92,3 @@ class FileLedgerSink:
 
 
 __all__: list[str] = ["FileLedgerSink"]
-

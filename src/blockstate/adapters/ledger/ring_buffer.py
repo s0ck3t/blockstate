@@ -72,9 +72,7 @@ class SessionPartitionedRingBuffer:
                         with contextlib.suppress(NotImplementedError, RuntimeError):
                             loop.add_signal_handler(
                                 sig,
-                                lambda: asyncio.create_task(
-                                    self.drain(self.drain_timeout_seconds)
-                                ),
+                                lambda: asyncio.create_task(self.drain(self.drain_timeout_seconds)),
                             )
         except Exception:
             pass
@@ -252,9 +250,7 @@ class SessionPartitionedRingBuffer:
         try:
             await asyncio.wait_for(_drain_queues(), timeout=timeout_seconds)
         except Exception as exc:
-            logger.warning(
-                "Drain timed out or encountered sink error: %s. Spilling to WAL.", exc
-            )
+            logger.warning("Drain timed out or encountered sink error: %s. Spilling to WAL.", exc)
 
         if self._pending_records:
             spilled_records = self._spill_to_wal(list(self._pending_records))

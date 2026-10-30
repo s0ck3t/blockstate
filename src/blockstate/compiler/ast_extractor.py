@@ -221,13 +221,13 @@ class _DCGASTVisitor(ast.NodeVisitor):
             and self.current_stage is not None
         ):
             raise DynamicTransitionError(
-                    f"Dynamic transition destination detected at {self.filename}:{lineno}. "
-                    f"Transitions must reference static State definitions to enable "
-                    f"Lengauer-Tarjan dominator verification.",
-                    code="BLK-AST-014",
-                    filename=self.filename,
-                    lineno=lineno,
-                )
+                f"Dynamic transition destination detected at {self.filename}:{lineno}. "
+                f"Transitions must reference static State definitions to enable "
+                f"Lengauer-Tarjan dominator verification.",
+                code="BLK-AST-014",
+                filename=self.filename,
+                lineno=lineno,
+            )
 
         # 2. Detect Transition calls
         if self._is_transition_call(node):
@@ -382,8 +382,10 @@ class _DCGASTVisitor(ast.NodeVisitor):
 
         if isinstance(dec, ast.Call):
             # Positional arguments: @Stage("name")
-            if dec.args and isinstance(dec.args[0], ast.Constant) and isinstance(
-                dec.args[0].value, str
+            if (
+                dec.args
+                and isinstance(dec.args[0], ast.Constant)
+                and isinstance(dec.args[0].value, str)
             ):
                 name = dec.args[0].value
 

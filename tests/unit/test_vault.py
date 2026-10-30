@@ -437,6 +437,7 @@ def test_pii_vault_sanitise_sync_with_vault_map_arg() -> None:
 
 def test_vaulted_annotation_in_pydantic_model() -> None:
     """Verify Pydantic BaseModel with Vaulted[T] field handles token assignment."""
+
     class CustomerKYC(BaseModel):
         postcode: Vaulted[str] = Field(description="UK customer postcode")
         account_id: int

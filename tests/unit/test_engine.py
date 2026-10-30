@@ -397,6 +397,7 @@ async def test_engine_validation_breach_routing() -> None:
 @pytest.mark.asyncio
 async def test_engine_guards_and_async_handlers() -> None:
     """Verify async handlers, stage guards, and pop slot mutations."""
+
     class GuardAgent(Agent):
         @Stage(name="step_a")
         async def step_a(self) -> Transition[None]:
@@ -431,6 +432,7 @@ async def test_engine_guards_and_async_handlers() -> None:
 @pytest.mark.asyncio
 async def test_engine_digression_mutation_propagation() -> None:
     """Verify completed digression frame applies SlotMutation to parent frame on pop."""
+
     class DigressAgent(Agent):
         @Stage(name="parent", allow_digressions=["child"], allow_slot_overrides=True)
         def parent(self) -> Transition[None]:
@@ -517,6 +519,7 @@ async def test_engine_security_violation_and_corrupted_vault_map() -> None:
 @pytest.mark.asyncio
 async def test_engine_sync_guard_and_dynamic_renderer() -> None:
     """Verify sync guard and custom response renderer invocation."""
+
     class SyncGuardAgent(Agent):
         @Stage(name="step_1")
         def step_1(self) -> Transition[None]:
@@ -542,5 +545,3 @@ async def test_engine_sync_guard_and_dynamic_renderer() -> None:
     res = await engine.step(env_render)
     assert isinstance(res, BlockstateTurnYield)
     assert res.message == "Dynamic render for step_2"
-
-

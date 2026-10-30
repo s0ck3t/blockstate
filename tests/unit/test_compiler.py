@@ -296,7 +296,7 @@ def test_compiler_500_node_synthetic_benchmark() -> None:
     # Generate 500 sequential stages
     for i in range(500):
         next_stage = f"stage_{i + 1}" if i < 499 else "stage_final"
-        is_initial = 'initial=True, ' if i == 0 else ""
+        is_initial = "initial=True, " if i == 0 else ""
         lines.append(f"    @Stage(name='stage_{i}', {is_initial}tools=['tool_{i}'])")
         lines.append(f"    def handler_{i}(self) -> Transition[str]:")
         lines.append(f"        return Transition.to('{next_stage}')")
@@ -385,4 +385,3 @@ class AttrAgent(Agent):
         validate_reachability=False,
     )
     assert attr_graph.stages["step_1"].collect_model == "MyModel"
-

@@ -53,9 +53,7 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     # Payment Cards (Visa, Mastercard, Amex)
     (
         "Credit Card",
-        re.compile(
-            r"\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13})\b"
-        ),
+        re.compile(r"\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13})\b"),
     ),
     # Bearer Token
     (

@@ -96,14 +96,10 @@ class InMemoryS3Client:
             raise KeyError(f"Key {Key} not found in bucket {Bucket}")
         return {"Body": AsyncMockBody(self.storage[Bucket][Key])}
 
-    async def list_objects_v2(
-        self, *, Bucket: str, Prefix: str = ""
-    ) -> dict[str, Any]:
+    async def list_objects_v2(self, *, Bucket: str, Prefix: str = "") -> dict[str, Any]:
         if Bucket not in self.storage:
             return {"Contents": []}
-        matched_keys = sorted(
-            [k for k in self.storage[Bucket] if k.startswith(Prefix)]
-        )
+        matched_keys = sorted([k for k in self.storage[Bucket] if k.startswith(Prefix)])
         return {"Contents": [{"Key": k} for k in matched_keys]}
 
     async def close(self) -> None:
@@ -585,5 +581,3 @@ async def test_s3_ledger_sink_continuation_token_and_directory_markers() -> None
     assert len(records) == 2
     assert records[0].record_hash == rec1.record_hash
     assert records[1].record_hash == rec2.record_hash
-
-

@@ -606,9 +606,7 @@ def test_target_model_direct_vaulted_validation_error_and_breach() -> None:
     SlotHydrator(TargetDirectInfoModel)
     SlotHydrator(TargetDirectPlainModel)
 
-    with active_vault_context(
-        vault_map={"<VAULT:NINO_01>": "BREACH", "<VAULT:NINO_02>": "BAD"}
-    ):
+    with active_vault_context(vault_map={"<VAULT:NINO_01>": "BREACH", "<VAULT:NINO_02>": "BAD"}):
         with pytest.raises(DisqualifyingBreachError):
             TargetDirectInfoModel(nino="<VAULT:NINO_01>")
         with pytest.raises(ValueError) as exc1:
@@ -886,6 +884,7 @@ def test_task_frame_update_slots_updates_and_locks() -> None:
 
 def test_multi_turn_progressive_hydration_to_completion() -> None:
     """Verify multi-turn progressive hydration to completion with an active TaskFrame."""
+
     class Address(BaseModel):
         city: str
         postcode: str
@@ -985,6 +984,7 @@ def test_target_model_instantiation_failure_is_sanitised() -> None:
 
 def test_breach_delta_includes_unset_fields() -> None:
     """Verify delta calculation on DisqualifyingBreachError includes UNSET fields."""
+
     class TwoFieldModel(BaseModel):
         first: str
         second: str

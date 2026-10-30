@@ -433,10 +433,7 @@ class LiteLLMAdapter(IntentClassifier, ResponseRenderer):
             },
             {
                 "role": "user",
-                "content": (
-                    f"Active Stage: {stage}\n"
-                    f"Context: {json.dumps(context, default=str)}"
-                ),
+                "content": (f"Active Stage: {stage}\nContext: {json.dumps(context, default=str)}"),
             },
         ]
 

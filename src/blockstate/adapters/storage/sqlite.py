@@ -59,9 +59,9 @@ class SQLiteStorageBackend:
         """Normalise DSN or file path to standard filesystem path or :memory:."""
         cleaned = path.strip()
         if cleaned.startswith("sqlite+aiosqlite:///"):
-            cleaned = cleaned[len("sqlite+aiosqlite:///"):]
+            cleaned = cleaned[len("sqlite+aiosqlite:///") :]
         elif cleaned.startswith("sqlite:///"):
-            cleaned = cleaned[len("sqlite:///"):]
+            cleaned = cleaned[len("sqlite:///") :]
         return cleaned
 
     async def _init_connection(self) -> aiosqlite.Connection:
@@ -324,11 +324,7 @@ class SQLiteStorageBackend:
             ) as cursor:
                 lease_row = await cursor.fetchone()
 
-            if (
-                lease_row is None
-                or lease_row[0] != lease.lease_id
-                or now >= lease_row[1]
-            ):
+            if lease_row is None or lease_row[0] != lease.lease_id or now >= lease_row[1]:
                 raise LeaseTimeoutError(
                     f"Cannot save checkpoint for session '{checkpoint.session_id}': "
                     "lease is invalid",

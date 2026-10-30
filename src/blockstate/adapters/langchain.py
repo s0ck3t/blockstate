@@ -141,9 +141,7 @@ class BlockstateEnclaveTool:
             import concurrent.futures
 
             with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
-                fut = pool.submit(
-                    lambda: asyncio.run(self.ainvoke(input_data, config, **kwargs))
-                )
+                fut = pool.submit(lambda: asyncio.run(self.ainvoke(input_data, config, **kwargs)))
                 return fut.result()
         return asyncio.run(self.ainvoke(input_data, config, **kwargs))
 
@@ -253,9 +251,7 @@ def as_tool(
     elif isinstance(agent_or_cls, Agent):
         agent_instance = agent_or_cls
     else:
-        raise TypeError(
-            f"Expected Agent subclass or instance, got {type(agent_or_cls).__name__}"
-        )
+        raise TypeError(f"Expected Agent subclass or instance, got {type(agent_or_cls).__name__}")
 
     return BlockstateEnclaveTool(
         agent=agent_instance,

@@ -62,11 +62,13 @@ class TestPydanticAIIntentClassifierContract(IntentClassifierContractSuite):
                 return json.dumps({"intent": "unmapped", "candidate_slots": {}})
             if "bypass security" in utterance:
                 return json.dumps({"is_refusal": True})
-            return json.dumps({
-                "intent": "check_balance",
-                "candidate_slots": {"account_number": "ACC123"},
-                "confidence": 0.95,
-            })
+            return json.dumps(
+                {
+                    "intent": "check_balance",
+                    "candidate_slots": {"account_number": "ACC123"},
+                    "confidence": 0.95,
+                }
+            )
 
         return PydanticAIAdapter(
             intent_keywords={"check_balance": ["balance"]},
@@ -105,11 +107,13 @@ class TestLiteLLMIntentClassifierContract(IntentClassifierContractSuite):
                 return json.dumps({"intent": "unmapped", "candidate_slots": {}})
             if "bypass security" in utterance:
                 return json.dumps({"is_refusal": True})
-            return json.dumps({
-                "intent": "check_balance",
-                "candidate_slots": {"account_number": "ACC123"},
-                "confidence": 0.95,
-            })
+            return json.dumps(
+                {
+                    "intent": "check_balance",
+                    "candidate_slots": {"account_number": "ACC123"},
+                    "confidence": 0.95,
+                }
+            )
 
         return LiteLLMAdapter(
             model="gpt-4o-mini",
@@ -222,8 +226,7 @@ async def test_onnx_slot_extraction_types_and_patterns() -> None:
         }
     }
     utterance = (
-        "Please update account ACC12345 with date 1995-12-31, "
-        "amount 250.50, count 3, CODE-7890"
+        "Please update account ACC12345 with date 1995-12-31, amount 250.50, count 3, CODE-7890"
     )
     res = await classifier.extract(utterance, schema)
 
@@ -315,11 +318,13 @@ def test_onnx_missing_dependency_import_error() -> None:
 async def test_pydantic_ai_pass1_structured_extraction() -> None:
     """Verify PydanticAIAdapter Pass 1 extraction parsing structured JSON."""
     adapter = PydanticAIAdapter(
-        mock_response=json.dumps({
-            "intent": "confirm_details",
-            "candidate_slots": {"account_id": "ACC999", "hallucinated_slot": "bad"},
-            "confidence": 0.99,
-        })
+        mock_response=json.dumps(
+            {
+                "intent": "confirm_details",
+                "candidate_slots": {"account_id": "ACC999", "hallucinated_slot": "bad"},
+                "confidence": 0.99,
+            }
+        )
     )
     schema = {"properties": {"account_id": {"type": "string"}}}
     res = await adapter.extract("Confirm account ACC999", schema)
@@ -334,6 +339,7 @@ async def test_pydantic_ai_pass1_structured_extraction() -> None:
 @pytest.mark.asyncio
 async def test_pydantic_ai_pass2_tool_whitelisting_strict_isolation() -> None:
     """Verify Pass 2 rendering physically omits unwhitelisted tools from the model."""
+
     def balance_tool(acc: str) -> str:
         return "500"
 
@@ -406,11 +412,13 @@ async def test_litellm_pass1_structured_extraction() -> None:
     """Verify LiteLLMAdapter extracts structured JSON with slot filtering."""
     adapter = LiteLLMAdapter(
         model="gpt-4o-mini",
-        mock_response=json.dumps({
-            "intent": "verify_email",
-            "candidate_slots": {"email": "test@example.com", "extra": "omit"},
-            "confidence": 0.92,
-        }),
+        mock_response=json.dumps(
+            {
+                "intent": "verify_email",
+                "candidate_slots": {"email": "test@example.com", "extra": "omit"},
+                "confidence": 0.92,
+            }
+        ),
     )
     schema = {"properties": {"email": {"type": "string"}}}
     res = await adapter.extract("My email is test@example.com", schema)
@@ -424,6 +432,7 @@ async def test_litellm_pass1_structured_extraction() -> None:
 @pytest.mark.asyncio
 async def test_litellm_pass2_tool_whitelisting_raw_payload() -> None:
     """Verify LiteLLMAdapter inspects raw outbound payload has 0 unwhitelisted tools."""
+
     def check_balance(account_id: str) -> str:
         """Check balance."""
         return "£100"
@@ -502,6 +511,7 @@ def test_litellm_missing_dependency_import_error() -> None:
 
 def test_callable_to_tool_schema_conversion() -> None:
     """Verify automatic generation of OpenAI-compatible schemas from Python functions."""
+
     def sample_func(name: str, count: int, ratio: float, active: bool, items: list[str]) -> str:
         """Sample documentation string."""
         return "ok"
@@ -586,11 +596,13 @@ async def test_pydantic_ai_agent_run_and_branches() -> None:
     from pydantic_ai.models.test import TestModel
 
     # 1. Extraction with TestModel returning structured JSON
-    success_json = json.dumps({
-        "intent": "verify_identity",
-        "candidate_slots": {"user_id": "USR-101"},
-        "confidence": 0.98,
-    })
+    success_json = json.dumps(
+        {
+            "intent": "verify_identity",
+            "candidate_slots": {"user_id": "USR-101"},
+            "confidence": 0.98,
+        }
+    )
     adapter1 = PydanticAIAdapter(model=TestModel(custom_output_text=success_json))
     schema = {"properties": {"user_id": {"type": "string"}}}
     res1 = await adapter1.extract("My id is USR-101", schema, timeout_ms=2000)
@@ -653,6 +665,7 @@ async def test_pydantic_ai_agent_run_and_branches() -> None:
 @pytest.mark.asyncio
 async def test_litellm_extended_branches() -> None:
     """Verify LiteLLMAdapter callable schemas, tool configuration options, and acompletion calls."""
+
     # 1. _callable_to_tool_schema parameters: context, default, dict, float, bool
     def full_tool(
         context: Any,
@@ -1056,11 +1069,13 @@ async def test_pydantic_ai_prefers_model_output_over_keyword_match() -> None:
     """Verify model output takes precedence over keyword fallback matching."""
     adapter = PydanticAIAdapter(
         intent_keywords={"keyword_intent": ["balance"]},
-        mock_response=json.dumps({
-            "intent": "model_extracted_intent",
-            "candidate_slots": {"account_id": "ACC999"},
-            "confidence": 0.99,
-        }),
+        mock_response=json.dumps(
+            {
+                "intent": "model_extracted_intent",
+                "candidate_slots": {"account_id": "ACC999"},
+                "confidence": 0.99,
+            }
+        ),
     )
     schema = {
         "type": "object",

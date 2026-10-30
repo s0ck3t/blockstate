@@ -137,9 +137,9 @@ class PostgresStorageBackend:
 
         cleaned = dsn.strip()
         if cleaned.startswith("postgres://"):
-            cleaned = "postgresql+asyncpg://" + cleaned[len("postgres://"):]
+            cleaned = "postgresql+asyncpg://" + cleaned[len("postgres://") :]
         elif cleaned.startswith("postgresql://") and not cleaned.startswith("postgresql+"):
-            cleaned = "postgresql+asyncpg://" + cleaned[len("postgresql://"):]
+            cleaned = "postgresql+asyncpg://" + cleaned[len("postgresql://") :]
         return cleaned
 
     async def _ensure_tables(self) -> None:
@@ -362,11 +362,7 @@ class PostgresStorageBackend:
                 lease_res = await conn.execute(select_lease_stmt)
                 lease_row = lease_res.fetchone()
 
-                if (
-                    lease_row is None
-                    or lease_row[0] != lease.lease_id
-                    or now >= lease_row[1]
-                ):
+                if lease_row is None or lease_row[0] != lease.lease_id or now >= lease_row[1]:
                     raise LeaseTimeoutError(
                         f"Cannot save checkpoint for session '{checkpoint.session_id}': "
                         "lease is invalid",
@@ -402,58 +398,70 @@ class PostgresStorageBackend:
                 if dialect_name == "postgresql":
                     from sqlalchemy.dialects.postgresql import insert as pg_insert
 
-                    stmt = pg_insert(self.checkpoints_table).values(
-                        session_id=checkpoint.session_id,
-                        schema_version=checkpoint.schema_version,
-                        revision_id=checkpoint.revision_id,
-                        state_json=state_json,
-                        task_stack_json=task_stack_json,
-                        last_ledger_hash=checkpoint.last_ledger_hash,
-                        pending_ledger_outbox_json=pending_outbox_json,
-                        vault_map=vault_map_blob,
-                        created_at=checkpoint.created_at,
-                        updated_at=checkpoint.updated_at,
-                    ).on_conflict_do_update(
-                        index_elements=["session_id"],
-                        set_={
-                            "schema_version": checkpoint.schema_version,
-                            "revision_id": checkpoint.revision_id,
-                            "state_json": state_json,
-                            "task_stack_json": task_stack_json,
-                            "last_ledger_hash": checkpoint.last_ledger_hash,
-                            "pending_ledger_outbox_json": pending_outbox_json,
-                            "vault_map": vault_map_blob,
-                            "updated_at": checkpoint.updated_at,
-                        },
-                        where=(self.checkpoints_table.c.revision_id + 1 == checkpoint.revision_id),
+                    stmt = (
+                        pg_insert(self.checkpoints_table)
+                        .values(
+                            session_id=checkpoint.session_id,
+                            schema_version=checkpoint.schema_version,
+                            revision_id=checkpoint.revision_id,
+                            state_json=state_json,
+                            task_stack_json=task_stack_json,
+                            last_ledger_hash=checkpoint.last_ledger_hash,
+                            pending_ledger_outbox_json=pending_outbox_json,
+                            vault_map=vault_map_blob,
+                            created_at=checkpoint.created_at,
+                            updated_at=checkpoint.updated_at,
+                        )
+                        .on_conflict_do_update(
+                            index_elements=["session_id"],
+                            set_={
+                                "schema_version": checkpoint.schema_version,
+                                "revision_id": checkpoint.revision_id,
+                                "state_json": state_json,
+                                "task_stack_json": task_stack_json,
+                                "last_ledger_hash": checkpoint.last_ledger_hash,
+                                "pending_ledger_outbox_json": pending_outbox_json,
+                                "vault_map": vault_map_blob,
+                                "updated_at": checkpoint.updated_at,
+                            },
+                            where=(
+                                self.checkpoints_table.c.revision_id + 1 == checkpoint.revision_id
+                            ),
+                        )
                     )
                 elif dialect_name == "sqlite":
                     from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 
-                    stmt = sqlite_insert(self.checkpoints_table).values(
-                        session_id=checkpoint.session_id,
-                        schema_version=checkpoint.schema_version,
-                        revision_id=checkpoint.revision_id,
-                        state_json=state_json,
-                        task_stack_json=task_stack_json,
-                        last_ledger_hash=checkpoint.last_ledger_hash,
-                        pending_ledger_outbox_json=pending_outbox_json,
-                        vault_map=vault_map_blob,
-                        created_at=checkpoint.created_at,
-                        updated_at=checkpoint.updated_at,
-                    ).on_conflict_do_update(
-                        index_elements=["session_id"],
-                        set_={
-                            "schema_version": checkpoint.schema_version,
-                            "revision_id": checkpoint.revision_id,
-                            "state_json": state_json,
-                            "task_stack_json": task_stack_json,
-                            "last_ledger_hash": checkpoint.last_ledger_hash,
-                            "pending_ledger_outbox_json": pending_outbox_json,
-                            "vault_map": vault_map_blob,
-                            "updated_at": checkpoint.updated_at,
-                        },
-                        where=(self.checkpoints_table.c.revision_id + 1 == checkpoint.revision_id),
+                    stmt = (
+                        sqlite_insert(self.checkpoints_table)
+                        .values(
+                            session_id=checkpoint.session_id,
+                            schema_version=checkpoint.schema_version,
+                            revision_id=checkpoint.revision_id,
+                            state_json=state_json,
+                            task_stack_json=task_stack_json,
+                            last_ledger_hash=checkpoint.last_ledger_hash,
+                            pending_ledger_outbox_json=pending_outbox_json,
+                            vault_map=vault_map_blob,
+                            created_at=checkpoint.created_at,
+                            updated_at=checkpoint.updated_at,
+                        )
+                        .on_conflict_do_update(
+                            index_elements=["session_id"],
+                            set_={
+                                "schema_version": checkpoint.schema_version,
+                                "revision_id": checkpoint.revision_id,
+                                "state_json": state_json,
+                                "task_stack_json": task_stack_json,
+                                "last_ledger_hash": checkpoint.last_ledger_hash,
+                                "pending_ledger_outbox_json": pending_outbox_json,
+                                "vault_map": vault_map_blob,
+                                "updated_at": checkpoint.updated_at,
+                            },
+                            where=(
+                                self.checkpoints_table.c.revision_id + 1 == checkpoint.revision_id
+                            ),
+                        )
                     )
                 else:
                     # Fallback for standard dialects

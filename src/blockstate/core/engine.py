@@ -395,8 +395,7 @@ class StatechartEngine:
                     ):
                         handler_args[p_name] = session_view
                     elif p_name in ("slots", "data") or (
-                        active_frame.target_model
-                        and param.annotation is active_frame.target_model
+                        active_frame.target_model and param.annotation is active_frame.target_model
                     ):
                         handler_args[p_name] = slots_to_pass
 
@@ -420,8 +419,7 @@ class StatechartEngine:
                     ):
                         guard_kwargs[p_name] = session_view
                     elif p_name in ("slots", "data") or (
-                        active_frame.target_model
-                        and param.annotation is active_frame.target_model
+                        active_frame.target_model and param.annotation is active_frame.target_model
                     ):
                         guard_kwargs[p_name] = slots_to_pass
 
@@ -458,8 +456,7 @@ class StatechartEngine:
                     ):
                         terminal_args[p_name] = session_view
                     elif p_name in ("slots", "data") or (
-                        active_frame.target_model
-                        and param.annotation is active_frame.target_model
+                        active_frame.target_model and param.annotation is active_frame.target_model
                     ):
                         terminal_args[p_name] = slots_to_pass
 
@@ -522,8 +519,7 @@ class StatechartEngine:
                 stage_to=target_stage_name,
                 guard_outcome="end",
                 result=(
-                    guard_directive.result
-                    or {"status": "completed", "slots": active_frame.slots}
+                    guard_directive.result or {"status": "completed", "slots": active_frame.slots}
                 ),
                 rendered_message=rendered_message,
             )

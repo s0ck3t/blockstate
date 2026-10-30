@@ -56,9 +56,11 @@ class VaultCipher:
         settings = BlockstateSettings()
 
         resolved_key = secret_key
-        if resolved_key is None or (
-            isinstance(resolved_key, SecretStr) and not resolved_key.get_secret_value()
-        ) or (isinstance(resolved_key, (str, bytes)) and not resolved_key):
+        if (
+            resolved_key is None
+            or (isinstance(resolved_key, SecretStr) and not resolved_key.get_secret_value())
+            or (isinstance(resolved_key, (str, bytes)) and not resolved_key)
+        ):
             cfg_key = settings.vault_secret_key.get_secret_value()
             resolved_key = cfg_key if cfg_key else os.urandom(32)
 
@@ -218,9 +220,11 @@ class PIIVault:
             self._cipher = VaultCipher(secret_key=secret_key, fallback_keys=fallback_keys)
 
         resolved_pepper = hmac_pepper
-        if resolved_pepper is None or (
-            isinstance(resolved_pepper, SecretStr) and not resolved_pepper.get_secret_value()
-        ) or (isinstance(resolved_pepper, (str, bytes)) and not resolved_pepper):
+        if (
+            resolved_pepper is None
+            or (isinstance(resolved_pepper, SecretStr) and not resolved_pepper.get_secret_value())
+            or (isinstance(resolved_pepper, (str, bytes)) and not resolved_pepper)
+        ):
             cfg_pepper = settings.vault_hmac_pepper.get_secret_value()
             resolved_pepper = cfg_pepper if cfg_pepper else "blockstate-default-pepper-v1"
 
@@ -373,6 +377,7 @@ class PIIVault:
         session_id: str = "default",
     ) -> Mapping[str, Any]:
         """Synchronously and recursively sanitise string values in a dictionary."""
+
         def _recurse(val: Any) -> Any:
             if isinstance(val, str):
                 return self.sanitise_sync(val, session_id=session_id).sanitised_text
@@ -427,6 +432,7 @@ class PIIVault:
         session_id: str | None = None,
     ) -> Mapping[str, Any]:
         """Recursively detokenise all string values in a mapping."""
+
         def _recurse(val: Any) -> Any:
             if isinstance(val, str):
                 return self.detokenise(val, vault_map=vault_map, session_id=session_id)

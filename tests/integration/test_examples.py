@@ -35,9 +35,7 @@ def test_reference_agent_execution(example_script: str) -> None:
     )
 
     assert proc.returncode == 0, (
-        f"Execution failed for {example_script}:\n"
-        f"STDOUT:\n{proc.stdout}\n"
-        f"STDERR:\n{proc.stderr}"
+        f"Execution failed for {example_script}:\nSTDOUT:\n{proc.stdout}\nSTDERR:\n{proc.stderr}"
     )
     assert "Completed Successfully" in proc.stdout
 
@@ -102,8 +100,6 @@ def test_motor_insurance_defensive_audit() -> None:
     )
 
     assert proc.returncode == 0, (
-        f"Defensive audit failed:\n"
-        f"STDOUT:\n{proc.stdout}\n"
-        f"STDERR:\n{proc.stderr}"
+        f"Defensive audit failed:\nSTDOUT:\n{proc.stdout}\nSTDERR:\n{proc.stderr}"
     )
     assert "DEFENSIVE AUDIT SUMMARY: 6/6 TRIALS DEFENDED (100.0%)" in proc.stdout

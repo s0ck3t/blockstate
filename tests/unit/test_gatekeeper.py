@@ -83,10 +83,12 @@ def test_build_dispatch_table_isolation() -> None:
     """Verify ToolGatekeeper creates ephemeral MappingProxyType with whitelisted tools only."""
     gatekeeper = ToolGatekeeper()
     gatekeeper.register_tool("check_balance", sync_check_balance)
-    gatekeeper.register_tools({
-        "fetch_profile": async_fetch_profile,
-        "sensitive_transfer": sensitive_transfer,
-    })
+    gatekeeper.register_tools(
+        {
+            "fetch_profile": async_fetch_profile,
+            "sensitive_transfer": sensitive_transfer,
+        }
+    )
 
     assert gatekeeper.get_tool("check_balance") is sync_check_balance
     assert gatekeeper.get_tool("non_existent") is None
@@ -237,11 +239,13 @@ async def test_detokenise_parameter_injection_and_context() -> None:
     if account_token not in sanitised.vault_tokens:
         vault._session_tokens["test_sess"] = {account_token: "12345678"}
 
-    gatekeeper = ToolGatekeeper({
-        "sensitive_transfer": sensitive_transfer,
-        "sensitive_mapping_tool": sensitive_mapping_tool,
-        "sensitive_list_tool": sensitive_list_tool,
-    })
+    gatekeeper = ToolGatekeeper(
+        {
+            "sensitive_transfer": sensitive_transfer,
+            "sensitive_mapping_tool": sensitive_mapping_tool,
+            "sensitive_list_tool": sensitive_list_tool,
+        }
+    )
     context = RunContext(deps=None, session_id="test_sess", vault=vault)
     assert context.detokenise(account_token) == "12345678"
 
@@ -296,11 +300,13 @@ async def test_detokenise_parameter_injection_and_context() -> None:
 async def test_tool_return_value_is_resanitised() -> None:
     """Verify ToolGatekeeper re-sanitises string and dict outputs before exiting."""
     vault = PIIVault()
-    gatekeeper = ToolGatekeeper({
-        "tool_returning_pii": tool_returning_pii,
-        "tool_returning_mapping_pii": tool_returning_mapping_pii,
-        "tool_returning_integer": tool_returning_integer,
-    })
+    gatekeeper = ToolGatekeeper(
+        {
+            "tool_returning_pii": tool_returning_pii,
+            "tool_returning_mapping_pii": tool_returning_mapping_pii,
+            "tool_returning_integer": tool_returning_integer,
+        }
+    )
     context = RunContext(deps=None, session_id="resanitise_sess")
 
     result = await gatekeeper.invoke(

@@ -69,7 +69,7 @@ def test_validate_ssn() -> None:
     assert validate_ssn("950-12-3456") is False
     assert validate_ssn("123-00-4567") is False  # Group 00
     assert validate_ssn("123-45-0000") is False  # Serial 0000
-    assert validate_ssn("123456789") is False    # Missing dashes
+    assert validate_ssn("123456789") is False  # Missing dashes
     assert validate_ssn("12-345-6789") is False
     assert validate_ssn("abc-de-fghi") is False
 

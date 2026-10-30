@@ -65,8 +65,7 @@ class S3LedgerSink:
     def _make_key(self, record: TurnLedgerRecord) -> str:
         """Construct deterministic S3 object key partitioned by session and turn."""
         return (
-            f"{self.prefix}/{record.session_id}/"
-            f"{record.turn_index:08d}_{record.record_hash}.json"
+            f"{self.prefix}/{record.session_id}/{record.turn_index:08d}_{record.record_hash}.json"
         )
 
     async def append(self, record: TurnLedgerRecord) -> None:
@@ -109,9 +108,7 @@ class S3LedgerSink:
                 paginator = None
 
         if paginator is not None:
-            async for page in paginator.paginate(
-                Bucket=self.bucket_name, Prefix=search_prefix
-            ):
+            async for page in paginator.paginate(Bucket=self.bucket_name, Prefix=search_prefix):
                 for item in page.get("Contents", []):
                     key = item.get("Key", "")
                     if not key.endswith(".json"):

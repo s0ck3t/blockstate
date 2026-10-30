@@ -79,9 +79,7 @@ class PydanticAIAdapter(IntentClassifier, ResponseRenderer):
 
         if model is None:
             if TestModel is not None:
-                self._model: Any = TestModel(
-                    custom_output_text="Response rendered successfully."
-                )
+                self._model: Any = TestModel(custom_output_text="Response rendered successfully.")
             else:  # pragma: no cover
                 self._model = None
         else:
@@ -218,11 +216,7 @@ class PydanticAIAdapter(IntentClassifier, ResponseRenderer):
                             latency_ms=elapsed_ms,
                         )
                     valid_props = delta_schema.get("properties") or {}
-                    filtered_slots = {
-                        k: v
-                        for k, v in parsed_slots.items()
-                        if k in valid_props
-                    }
+                    filtered_slots = {k: v for k, v in parsed_slots.items() if k in valid_props}
                     elapsed_ms = (time.perf_counter() - start_time) * 1000.0
                     return ExtractionResult(
                         intent=parsed_intent,
@@ -279,11 +273,7 @@ class PydanticAIAdapter(IntentClassifier, ResponseRenderer):
                             latency_ms=elapsed_ms,
                         )
                     valid_props = delta_schema.get("properties") or {}
-                    filtered_slots = {
-                        k: v
-                        for k, v in parsed_slots.items()
-                        if k in valid_props
-                    }
+                    filtered_slots = {k: v for k, v in parsed_slots.items() if k in valid_props}
                     elapsed_ms = (time.perf_counter() - start_time) * 1000.0
                     return ExtractionResult(
                         intent=parsed_intent,
@@ -415,10 +405,7 @@ class PydanticAIAdapter(IntentClassifier, ResponseRenderer):
             if self.system_prompt is not None:
                 agent_kwargs["system_prompt"] = self.system_prompt
             agent = Agent(**agent_kwargs)
-            prompt = (
-                f"Active Stage: {stage}\n"
-                f"Context: {json.dumps(context, default=str)}"
-            )
+            prompt = f"Active Stage: {stage}\nContext: {json.dumps(context, default=str)}"
             try:
                 run_res = await agent.run(prompt)
                 output = getattr(run_res, "output", getattr(run_res, "data", None))

@@ -84,9 +84,8 @@ def upcast_checkpoint_payload(
     current_version = int(migrated.get("schema_version", 1))
 
     while (
-        (target_version is None or current_version < target_version)
-        and current_version in upcasters
-    ):
+        target_version is None or current_version < target_version
+    ) and current_version in upcasters:
         upcaster = upcasters[current_version]
         migrated = upcaster(dict(migrated))
         next_version = int(migrated.get("schema_version", current_version + 1))

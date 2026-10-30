@@ -1124,9 +1124,7 @@ def scaffold_project(
     module_name = f"{base_name}_agent"
     class_name = enclave_template.agent_class_name
     test_filename = (
-        f"test_{base_name}.py"
-        if enclave_template.name == "minimal"
-        else f"test_{module_name}.py"
+        f"test_{base_name}.py" if enclave_template.name == "minimal" else f"test_{module_name}.py"
     )
 
     generated_files: list[Path] = []

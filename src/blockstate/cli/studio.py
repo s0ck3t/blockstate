@@ -787,6 +787,7 @@ def run_studio(
     )
 
     if open_browser:
+
         def _open_url_delayed() -> None:
             time.sleep(0.4)
             webbrowser.open(url)

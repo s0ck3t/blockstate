@@ -109,9 +109,9 @@ class PostgresLedgerSink:
 
         cleaned = dsn.strip()
         if cleaned.startswith("postgres://"):
-            cleaned = "postgresql+asyncpg://" + cleaned[len("postgres://"):]
+            cleaned = "postgresql+asyncpg://" + cleaned[len("postgres://") :]
         elif cleaned.startswith("postgresql://") and not cleaned.startswith("postgresql+"):
-            cleaned = "postgresql+asyncpg://" + cleaned[len("postgresql://"):]
+            cleaned = "postgresql+asyncpg://" + cleaned[len("postgresql://") :]
         return cleaned
 
     async def _ensure_tables(self) -> None:

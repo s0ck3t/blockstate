@@ -165,9 +165,7 @@ async def test_ring_buffer_multi_session_concurrency(tmp_path: Any) -> None:
     for turn in range(3):
         for s in sessions:
             prev_hash = (
-                records_per_session[s][-1].record_hash
-                if records_per_session[s]
-                else "0" * 64
+                records_per_session[s][-1].record_hash if records_per_session[s] else "0" * 64
             )
             rec = _make_record(s, turn, prev_record_hash=prev_hash)
             records_per_session[s].append(rec)
@@ -202,9 +200,7 @@ async def test_ring_buffer_outbox_ack_callback(tmp_path: Any) -> None:
         acknowledged.append(rec)
 
     wal_path = tmp_path / "wal" / "ledger.wal"
-    buffer = SessionPartitionedRingBuffer(
-        sink=sink, wal_path=wal_path, outbox_ack_callback=on_ack
-    )
+    buffer = SessionPartitionedRingBuffer(sink=sink, wal_path=wal_path, outbox_ack_callback=on_ack)
 
     rec = _make_record("session-ack", 0)
     buffer.enqueue(rec)
@@ -642,5 +638,3 @@ async def test_ring_buffer_idle_queue_cleanup(tmp_path: Any) -> None:
     assert session_id not in buffer._session_queues
 
     await buffer.close()
-
-

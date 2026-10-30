@@ -336,10 +336,7 @@ def detect_pii_spans(
     # Discard overlapping spans greedily
     accepted: list[PIIMatch] = []
     for cand in valid_candidates:
-        overlaps = any(
-            not (cand.end <= acc.start or cand.start >= acc.end)
-            for acc in accepted
-        )
+        overlaps = any(not (cand.end <= acc.start or cand.start >= acc.end) for acc in accepted)
         if not overlaps:
             accepted.append(cand)
 

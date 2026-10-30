@@ -452,9 +452,9 @@ def test_codegen_source_passes_ruff_and_mypy_strict() -> None:
                 text=True,
                 check=False,
             )
-            assert (
-                res_ruff.returncode == 0
-            ), f"Ruff failed on generated code:\n{res_ruff.stdout}\n{res_ruff.stderr}"
+            assert res_ruff.returncode == 0, (
+                f"Ruff failed on generated code:\n{res_ruff.stdout}\n{res_ruff.stderr}"
+            )
 
         # 2. Run mypy --strict on generated file
         mypy_bin = Path(sys.executable).parent / "mypy.exe"
@@ -465,9 +465,9 @@ def test_codegen_source_passes_ruff_and_mypy_strict() -> None:
                 text=True,
                 check=False,
             )
-            assert (
-                res_mypy.returncode == 0
-            ), f"Mypy failed on generated code:\n{res_mypy.stdout}\n{res_mypy.stderr}"
+            assert res_mypy.returncode == 0, (
+                f"Mypy failed on generated code:\n{res_mypy.stdout}\n{res_mypy.stderr}"
+            )
 
 
 def test_codegen_synthetic_50_node_benchmark() -> None:
@@ -680,4 +680,3 @@ def test_codegen_dominance_assertion_execution_in_namespace() -> None:
     assert callable(verifier)
     result = verifier()
     assert result is True
-

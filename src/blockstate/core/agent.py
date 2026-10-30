@@ -170,8 +170,7 @@ class Agent:
             if stage_meta is not None:
                 if stage_meta.name in stages:
                     msg = (
-                        f"Duplicate stage identifier '{stage_meta.name}' declared in "
-                        f"{cls.__name__}"
+                        f"Duplicate stage identifier '{stage_meta.name}' declared in {cls.__name__}"
                     )
                     raise DuplicateStageError(
                         msg,

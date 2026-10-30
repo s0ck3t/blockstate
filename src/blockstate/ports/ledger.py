@@ -125,4 +125,3 @@ __all__: list[str] = [
     "compute_record_hash",
     "verify_record_hash",
 ]
-

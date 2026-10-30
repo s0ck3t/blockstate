@@ -639,6 +639,7 @@ class StateStoreContractSuite(abc.ABC):
     @pytest.mark.asyncio
     async def test_schema_upcaster_migration(self) -> None:
         """Verify chained SchemaUpcaster migrations upgrade checkpoint version on load."""
+
         def upcast_1_to_2(data: dict[str, Any]) -> dict[str, Any]:
             payload = dict(data)
             payload["schema_version"] = 2
@@ -692,12 +693,10 @@ class StateStoreContractSuite(abc.ABC):
             vault_bytes = b"\x00\x01\x02\xff\xfe\xaa\xbb\xcc\xdd\xee\x00"
 
             task_stack = tuple(
-                {"depth": d, "stage": f"stage_{d}", "data": [d] * 10}
-                for d in range(6)
+                {"depth": d, "stage": f"stage_{d}", "data": [d] * 10} for d in range(6)
             )
             pending_outbox = tuple(
-                {"record_id": f"rec_{i}", "payload": f"data_{i}"}
-                for i in range(3)
+                {"record_id": f"rec_{i}", "payload": f"data_{i}"} for i in range(3)
             )
 
             cp = SessionCheckpoint(
@@ -736,6 +735,7 @@ class StateStoreContractSuite(abc.ABC):
     @pytest.mark.asyncio
     async def test_schema_upcaster_missing_version_raises_storage_error(self) -> None:
         """Verify missing upcaster when target_schema_version is higher raises BLK-STO-001."""
+
         def upcast_1_to_2(data: dict[str, Any]) -> dict[str, Any]:
             payload = dict(data)
             payload["schema_version"] = 2

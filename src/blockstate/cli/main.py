@@ -105,9 +105,7 @@ def init_cmd(
     base_name = name.strip() if name else template.value
     agent_filename = f"{base_name}_agent.py"
     test_filename = (
-        f"test_{base_name}.py"
-        if template == TemplateType.MINIMAL
-        else f"test_{base_name}_agent.py"
+        f"test_{base_name}.py" if template == TemplateType.MINIMAL else f"test_{base_name}_agent.py"
     )
 
     console.print(
@@ -384,9 +382,7 @@ def trace(
 
     for rec in records:
         chain_status = (
-            "[bold green]VALID[/bold green]"
-            if rec.chain_valid
-            else "[bold red]BROKEN[/bold red]"
+            "[bold green]VALID[/bold green]" if rec.chain_valid else "[bold red]BROKEN[/bold red]"
         )
         deltas_str = ", ".join(rec.slot_deltas) if rec.slot_deltas else "[dim]none[/dim]"
         tools_str = ", ".join(rec.exposed_tools) if rec.exposed_tools else "[dim]none[/dim]"
@@ -503,4 +499,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

@@ -202,7 +202,6 @@ def test_dominator_additional_coverage_branches() -> None:
     assert idoms["target"] == "root"
 
 
-
 # =============================================================================
 # Hypothesis Property-Based Dominator Equivalence Fuzzing (CAP-23)
 # =============================================================================

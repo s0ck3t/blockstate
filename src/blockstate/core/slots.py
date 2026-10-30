@@ -66,9 +66,7 @@ class _UnsetType:
         return hash("UNSET_SINGLETON")
 
     @classmethod
-    def __get_pydantic_core_schema__(
-        cls, _source_type: Any, _handler: Any
-    ) -> Any:
+    def __get_pydantic_core_schema__(cls, _source_type: Any, _handler: Any) -> Any:
         from pydantic_core import core_schema
 
         return core_schema.is_instance_schema(cls)
