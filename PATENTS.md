@@ -26,7 +26,7 @@ The pending patent application covers the core computer-implemented system, meth
 
 ## 3. How Patent Licensing Works for Users & Contributors
 
-Blockstate separates **open developer exploration** from **commercial production monetization** (see [`LICENSE`](LICENSE)):
+Blockstate separates **open developer exploration** from **commercial production monetisation** (see [`LICENSE`](LICENSE)):
 
 | Usage Scenario | Copyright & Patent Status | Fee / Agreement Required |
 | :--- | :--- | :--- |

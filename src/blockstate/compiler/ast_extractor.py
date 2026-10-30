@@ -395,8 +395,10 @@ class _DCGASTVisitor(ast.NodeVisitor):
                     is_initial = val
                 elif kw.arg == "terminal" and isinstance(val, bool):
                     terminal = val
-                elif kw.arg in ("tools", "allowed_tools") and isinstance(val, (list, tuple)):
-                    tools = [str(x) for x in val]
+                elif kw.arg in ("tools", "allowed_tools"):
+                    extracted_tools = self._extract_string_or_name_list(kw.value)
+                    if extracted_tools is not None:
+                        tools = extracted_tools
                 elif kw.arg in ("allow_digressions", "allowed_digressions") and isinstance(
                     val, (list, tuple)
                 ):
@@ -473,6 +475,19 @@ class _DCGASTVisitor(ast.NodeVisitor):
             return node.id
         if isinstance(node, ast.Attribute):
             return node.attr
+        return None
+
+    def _extract_string_or_name_list(self, node: ast.expr) -> list[str] | None:
+        if isinstance(node, (ast.List, ast.Tuple, ast.Set)):
+            items: list[str] = []
+            for elt in node.elts:
+                if isinstance(elt, ast.Constant) and isinstance(elt.value, str):
+                    items.append(elt.value)
+                elif isinstance(elt, ast.Name):
+                    items.append(elt.id)
+                elif isinstance(elt, ast.Attribute):
+                    items.append(elt.attr)
+            return items
         return None
 
 

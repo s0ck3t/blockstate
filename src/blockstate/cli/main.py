@@ -5,6 +5,7 @@ chronological trace replay, and Mermaid/JSON topology exporters.
 """
 
 import json
+import sys
 from pathlib import Path
 from typing import Annotated
 
@@ -14,6 +15,7 @@ from rich.panel import Panel
 from rich.table import Table
 
 from blockstate.adapters.telemetry.otel import DEFAULT_TRACES_PATH, TraceReplayer
+from blockstate.cli.scaffold import TEMPLATES, TemplateType, scaffold_project
 from blockstate.compiler.ast_extractor import StaticGraphCompiler
 from blockstate.compiler.dominators import verify_dominance
 from blockstate.compiler.exporters import export_json, export_mermaid
@@ -28,6 +30,130 @@ app = typer.Typer(
 
 console = Console()
 err_console = Console(stderr=True)
+
+
+def _is_interactive() -> bool:
+    """Return whether standard input is attached to an interactive terminal."""
+    return sys.stdin.isatty()
+
+
+@app.command(name="init")
+def init_cmd(
+    directory: Annotated[
+        Path,
+        typer.Argument(
+            help="Target directory to scaffold the enclave into. Defaults to current directory.",
+            show_default=".",
+        ),
+    ] = Path("."),
+    template: Annotated[
+        TemplateType,
+        typer.Option(
+            "--template",
+            "-t",
+            help="Starter enclave template (banking, insurance, healthcare, minimal).",
+            case_sensitive=False,
+        ),
+    ] = TemplateType.MINIMAL,
+    name: Annotated[
+        str | None,
+        typer.Option(
+            "--name",
+            "-n",
+            help="Custom identifier for the agent and filenames (defaults to template name).",
+        ),
+    ] = None,
+    force: Annotated[
+        bool,
+        typer.Option(
+            "--force",
+            "-f",
+            help="Overwrite existing files in target directory if it is not empty.",
+        ),
+    ] = False,
+) -> None:
+    """Scaffold a ready-to-verify Blockstate compliance enclave directory."""
+    is_non_empty = directory.exists() and any(directory.iterdir())
+    if is_non_empty and not force:
+        if _is_interactive():
+            confirm = typer.confirm(
+                f"Target directory '{directory}' already exists and contains files. Overwrite?",
+                default=False,
+            )
+            if not confirm:
+                console.print("[yellow]Scaffolding cancelled by user.[/yellow]")
+                raise typer.Exit(code=0)
+        else:
+            err_console.print(
+                f"[red]Error: Target directory '{directory}' already exists and is not empty. "
+                f"Use --force to overwrite existing files.[/red]"
+            )
+            raise typer.Exit(code=1)
+
+    try:
+        generated_files = scaffold_project(
+            target_dir=directory,
+            template=template,
+            force=True,
+            agent_name=name,
+        )
+    except Exception as exc:
+        err_console.print(f"[red]Error scaffolding enclave: {exc}[/red]")
+        raise typer.Exit(code=1) from None
+
+    template_meta = TEMPLATES[template]
+    base_name = name.strip() if name else template.value
+    agent_filename = f"{base_name}_agent.py"
+    test_filename = (
+        f"test_{base_name}.py"
+        if template == TemplateType.MINIMAL
+        else f"test_{base_name}_agent.py"
+    )
+
+    console.print(
+        Panel.fit(
+            f"[bold green]Blockstate Compliance Enclave Scaffolded[/bold green]\n"
+            f"Template: [cyan]{template.value}[/cyan] ({template_meta.agent_class_name})\n"
+            f"Precursor Invariant: [yellow]{template_meta.dominance_assertion}[/yellow]\n"
+            f"Target Directory: [bold]{directory.resolve()}[/bold]\n"
+            f"Total Files Generated: {len(generated_files)}",
+            title="Blockstate Init",
+            border_style="green",
+        )
+    )
+
+    files_table = Table(title="Generated Enclave Files", border_style="cyan")
+    files_table.add_column("File", style="bold")
+    files_table.add_column("Purpose", style="italic")
+
+    files_table.add_row(
+        agent_filename,
+        "Declarative Control Grammar statechart with stage-scoped tools and simulation runner",
+    )
+    files_table.add_row(
+        test_filename,
+        "Automated pytest suite verifying AST extraction, dominator proof, and turns",
+    )
+    files_table.add_row(".env.example", "Baseline runtime environment configuration")
+    files_table.add_row(
+        ".github/workflows/blockstate-verify.yml",
+        "Automated pull-request verification gate",
+    )
+    files_table.add_row("README.md", "Quickstart verification and execution instructions")
+    console.print(files_table)
+
+    console.print("\n[bold]Next Steps:[/bold]")
+    console.print(
+        f"  1. Verify topology:   [cyan]blockstate check {directory / agent_filename}[/cyan]"
+    )
+    console.print(
+        f"  2. Certify dominance: [cyan]blockstate verify {directory / agent_filename} "
+        f'--dominates "{template_meta.dominance_assertion}"[/cyan]'
+    )
+    console.print(f"  3. Run test suite:    [cyan]pytest {directory / test_filename} -v[/cyan]")
+    console.print(
+        f"  4. Visual canvas:     [cyan]blockstate studio {directory / agent_filename}[/cyan]"
+    )
 
 
 @app.command()
@@ -332,6 +458,44 @@ def export_cmd(
         raise typer.Exit(code=1)
 
 
+@app.command(name="studio")
+def studio_cmd(
+    path: Annotated[
+        Path | None,
+        typer.Argument(
+            help="Path to Python agent file or directory to inspect in Blockstate Studio.",
+        ),
+    ] = None,
+    port: Annotated[
+        int,
+        typer.Option(
+            "--port",
+            "-p",
+            help="Local port number to bind the Studio HTTP server.",
+        ),
+    ] = 8420,
+    host: Annotated[
+        str,
+        typer.Option(
+            "--host",
+            "-h",
+            help="Host address to bind the Studio HTTP server.",
+        ),
+    ] = "127.0.0.1",
+    no_browser: Annotated[
+        bool,
+        typer.Option(
+            "--no-browser",
+            help="Do not automatically launch the system web browser upon startup.",
+        ),
+    ] = False,
+) -> None:
+    """Launch the interactive visual statechart canvas and trace replay studio."""
+    from blockstate.cli.studio import run_studio
+
+    run_studio(path=path, host=host, port=port, open_browser=not no_browser)
+
+
 def main() -> None:
     """Entrypoint function for blockstate CLI executable."""
     app()
@@ -339,3 +503,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+

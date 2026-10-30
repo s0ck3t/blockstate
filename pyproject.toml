@@ -126,7 +126,7 @@ minversion = "9.0"
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 testpaths = ["tests"]
-addopts = "-v --strict-markers"
+addopts = "-v --strict-markers --ignore=tests/marketing_e2e --ignore=tests/unit/test_marketing_automation.py"
 markers = [
     "patent_invariant: Core architectural invariant recited in the pending UK patent application (Claims 1-15); do not remove or break without logging for the 12-month priority filing.",
 ]

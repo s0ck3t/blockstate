@@ -125,5 +125,15 @@ UK_Patent_*.docx
 UK_Patent_*.pdf
 *.memlog.md
 CLAUDE.md
+GEMINI.md
+TEST_INFRA.md
+TEST_READY.md
 project_brief_*.md
+marketing/
+.wrangler/
+tests/marketing_e2e/
+tests/unit/test_marketing_automation.py
+.github/workflows/marketing-automation.yml
+.github/workflows/deploy-pages.yml
+
 

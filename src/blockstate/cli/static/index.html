@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en-GB" data-theme="vellum">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blockstate Studio | Declarative Control Grammar & Visual Topology</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <!-- ========================================================================
+   * TITLE BLOCK (Archival Drawing Block)
+   * ======================================================================== -->
+  <header class="title-block">
+    <div class="title-block-meta">
+      <div class="title-block-item">
+        <span class="title-block-label">DRAWING NO.</span>
+        <span class="title-block-val" id="doc-drawing-no">BLK-2026-STUDIO</span>
+      </div>
+      <div class="title-block-item">
+        <span class="title-block-label">AGENT:</span>
+        <span class="title-block-val" id="doc-agent-name">Loading...</span>
+      </div>
+      <div class="title-block-item">
+        <span class="title-block-label">SCALE:</span>
+        <span class="title-block-val">1:1</span>
+      </div>
+      <div class="title-block-item">
+        <span class="title-block-label">EDITION:</span>
+        <span class="title-block-val" id="doc-edition-label">I (ARCHIVAL VELLUM)</span>
+      </div>
+    </div>
+    <div class="title-block-meta">
+      <div class="title-block-item">
+        <span class="title-block-label">SPECIFICATION:</span>
+        <span class="title-block-val">UK PATENT APPLICATION (CLAIM 1-15 INVARIANTS)</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================================================================
+   * CONTROL RIBBON
+   * ======================================================================== -->
+  <nav class="control-ribbon">
+    <div class="ribbon-group">
+      <span class="ribbon-label">Precursor:</span>
+      <select id="precursor-select" class="mech-select">
+        <option value="">(Select Precursor)</option>
+      </select>
+      <span class="ribbon-label">Target:</span>
+      <select id="target-select" class="mech-select">
+        <option value="">(Select Target)</option>
+      </select>
+      <button id="btn-verify-dominance" class="mech-button mech-button--primary">
+        Verify Dominance
+      </button>
+    </div>
+
+    <div class="ribbon-group">
+      <span class="ribbon-label">Edition:</span>
+      <select id="theme-select" class="mech-select">
+        <option value="vellum">Edition I: Archival Vellum</option>
+        <option value="cyanotype">Edition II: Prussian Cyanotype</option>
+        <option value="swiss">Edition III: Swiss Constructivist</option>
+      </select>
+      <button id="btn-export-cert" class="mech-button">
+        Audit Certificate
+      </button>
+      <button id="btn-export-code" class="mech-button">
+        Export Code
+      </button>
+      <button id="btn-reload-graph" class="mech-button">
+        Reload
+      </button>
+    </div>
+  </nav>
+
+  <!-- ========================================================================
+   * MAIN WORKSPACE
+   * ======================================================================== -->
+  <main class="workspace-container">
+    <!-- Visual Topology SVG Canvas -->
+    <div class="canvas-pane" id="canvas-container">
+      <svg id="statechart-canvas" class="canvas-svg">
+        <defs>
+          <!-- Normal Arrow Marker -->
+          <marker id="arrow-default" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="var(--text-primary)" />
+          </marker>
+          <!-- Dominated Clear Signal Green Marker -->
+          <marker id="arrow-dominated" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="var(--signal-clear)" />
+          </marker>
+          <!-- Counterexample Bypass Red Marker -->
+          <marker id="arrow-bypass" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="var(--signal-vermilion)" />
+          </marker>
+          <!-- Fallback Ochre Marker -->
+          <marker id="arrow-fallback" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="var(--signal-ochre)" />
+          </marker>
+        </defs>
+        <g id="canvas-transform-group">
+          <!-- Edges Render Layer -->
+          <g id="edges-layer"></g>
+          <!-- Nodes Render Layer -->
+          <g id="nodes-layer"></g>
+        </g>
+      </svg>
+
+      <!-- HUD Verification Status Readout -->
+      <div class="canvas-hud-status" id="hud-status">
+        <div class="hud-row">
+          <span class="hud-label">LENGAUER-TARJAN PROOF:</span>
+          <span class="hud-val" id="hud-proof-status">READY</span>
+        </div>
+        <div class="hud-row">
+          <span class="hud-label">CALCULATION LATENCY:</span>
+          <span class="hud-val" id="hud-latency">N/A</span>
+        </div>
+        <div class="hud-row">
+          <span class="hud-label">BYPASS ROUTE RISK:</span>
+          <span class="hud-val" id="hud-bypass-risk">N/A</span>
+        </div>
+      </div>
+
+      <!-- Zoom and Reset Controls -->
+      <div class="canvas-zoom-controls">
+        <button class="zoom-btn" id="btn-zoom-in" title="Zoom in">+</button>
+        <button class="zoom-btn" id="btn-zoom-out" title="Zoom out">−</button>
+        <button class="zoom-btn" id="btn-zoom-reset" title="Reset View">⊙</button>
+      </div>
+    </div>
+
+    <!-- Properties & Proof Inspector -->
+    <aside class="inspector-pane" id="inspector-panel">
+      <!-- Stage Details -->
+      <div class="inspector-section">
+        <div class="inspector-section-header">
+          <span>Active Stage Properties</span>
+          <span id="insp-stage-pill" class="status-pill status-pill--standard">STAGE</span>
+        </div>
+        <div class="stage-title" id="insp-stage-name">select_payment_rail</div>
+        <table class="prop-table">
+          <tbody>
+            <tr>
+              <td>Type:</td>
+              <td id="insp-stage-type">Standard Stage</td>
+            </tr>
+            <tr>
+              <td>Max Turns:</td>
+              <td id="insp-stage-turns">Unlimited</td>
+            </tr>
+            <tr>
+              <td>Collect Model:</td>
+              <td id="insp-stage-model">None</td>
+            </tr>
+            <tr>
+              <td>Digressions:</td>
+              <td id="insp-stage-digressions">None</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Tool Gatekeeper Card -->
+      <div class="inspector-section">
+        <div class="inspector-section-header">
+          <span>Ephemeral Tool Whitelist (MappingProxyType)</span>
+        </div>
+        <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">
+          Patent Claim 1 containment invariant: physical omission from memory table.
+        </p>
+        <div class="tool-badge-container" id="insp-tools-container">
+          <span style="font-size: 12px; color: var(--text-muted); font-style: italic;">No tools exposed</span>
+        </div>
+      </div>
+
+      <!-- Fallback Directives Card -->
+      <div class="inspector-section">
+        <div class="inspector-section-header">
+          <span>Deterministic Fallback Routing</span>
+        </div>
+        <table class="prop-table">
+          <tbody>
+            <tr>
+              <td>On Refusal:</td>
+              <td id="insp-fallback-refusal">N/A</td>
+            </tr>
+            <tr>
+              <td>On Turns Exceeded:</td>
+              <td id="insp-fallback-turns">N/A</td>
+            </tr>
+            <tr>
+              <td>On Breach:</td>
+              <td id="insp-fallback-breach">N/A</td>
+            </tr>
+            <tr>
+              <td>On Security Violation:</td>
+              <td id="insp-fallback-security">N/A</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Dominance Invariant Summary -->
+      <div class="inspector-section" style="flex: 1;">
+        <div class="inspector-section-header">
+          <span>Dominator Guarantee Summary</span>
+        </div>
+        <div id="insp-dominance-summary" style="font-size: 12px; line-height: 1.5; color: var(--text-secondary);">
+          Select a precursor stage and target stage above, then click <strong>Verify Dominance</strong> to compute the offline Lengauer-Tarjan proof.
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <!-- ========================================================================
+   * TRACE INSPECTOR DECK (Scrubber & Cryptographic Ledger)
+   * ======================================================================== -->
+  <section class="trace-deck" id="trace-deck">
+    <div class="trace-deck-header">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span class="ribbon-label">Turn Trace Timeline:</span>
+        <select id="trace-session-select" class="mech-select">
+          <option value="">(Loading traces...)</option>
+        </select>
+      </div>
+
+      <div class="scrubber-controls">
+        <button id="btn-trace-first" class="scrubber-btn" title="First Turn">|&lt;</button>
+        <button id="btn-trace-prev" class="scrubber-btn" title="Previous Turn">&lt;</button>
+        <span id="trace-turn-counter" class="turn-readout">Turn 0 / 0</span>
+        <button id="btn-trace-next" class="scrubber-btn" title="Next Turn">&gt;</button>
+        <button id="btn-trace-last" class="scrubber-btn" title="Last Turn">&gt;|</button>
+      </div>
+
+      <div id="trace-chain-status" class="status-pill status-pill--initial">
+        CHAIN UNCHECKED
+      </div>
+    </div>
+
+    <div class="trace-card-grid">
+      <!-- Card 1: TaskStack & Slot Deltas -->
+      <div class="trace-card">
+        <div class="trace-card-title">
+          <span>1. TaskStack &amp; Slot Deltas</span>
+          <span id="trace-stack-depth" style="font-family: var(--font-mono);">Depth 1</span>
+        </div>
+        <div style="font-size: 11px; margin-bottom: 4px;">
+          <strong>Stage:</strong> <span id="trace-current-stage" style="font-family: var(--font-mono);">N/A</span>
+        </div>
+        <div style="font-size: 11px; color: var(--text-muted);">
+          <strong>Mutated Slots:</strong> <span id="trace-slot-deltas">none</span>
+        </div>
+      </div>
+
+      <!-- Card 2: Ephemeral Tool Whitelist -->
+      <div class="trace-card">
+        <div class="trace-card-title">
+          <span>2. Tool Gatekeeper</span>
+          <span style="font-family: var(--font-mono);">Memory Whitelist</span>
+        </div>
+        <div id="trace-tools-list" class="tool-badge-container">
+          <span style="font-size: 11px; color: var(--text-muted); font-style: italic;">No tools exposed</span>
+        </div>
+      </div>
+
+      <!-- Card 3: Cryptographic TurnLedger Chain -->
+      <div class="trace-card">
+        <div class="trace-card-title">
+          <span>3. TurnLedger Hash Continuity</span>
+          <span style="font-family: var(--font-mono);">RFC 8785 JCS SHA-256</span>
+        </div>
+        <div class="hash-label">Prev Record Hash:</div>
+        <div class="hash-val" id="trace-prev-hash">00000000000000000000000000000000...</div>
+        <div class="hash-label" style="margin-top: 4px;">Record Hash:</div>
+        <div class="hash-val" id="trace-curr-hash">N/A</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+   * MODALS: AUDIT CERTIFICATE & CODE PREVIEW
+   * ======================================================================== -->
+  <!-- Audit Certificate Modal -->
+  <div class="modal-overlay" id="modal-cert">
+    <div class="modal-card">
+      <div class="modal-header">
+        <span>CISO &amp; MRM Dominance Audit Certificate</span>
+        <button class="modal-close-btn" id="modal-cert-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="margin-bottom: 12px; display: flex; gap: 10px; align-items: center;">
+          <span class="ribbon-label">Certificate Format:</span>
+          <select id="cert-format-select" class="mech-select">
+            <option value="markdown">Signed Markdown (*.dom.md)</option>
+            <option value="json">Structured JSON (*.dom.json)</option>
+          </select>
+          <button id="btn-fetch-cert" class="mech-button mech-button--primary">Regenerate</button>
+        </div>
+        <pre class="code-view" id="cert-content-view">Generating audit certificate...</pre>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-copy-cert" class="mech-button">Copy to Clipboard</button>
+        <button id="btn-close-cert-footer" class="mech-button">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Code Preview Modal -->
+  <div class="modal-overlay" id="modal-code">
+    <div class="modal-card">
+      <div class="modal-header">
+        <span>Deterministic Python 3.12+ Source Code</span>
+        <button class="modal-close-btn" id="modal-code-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <pre class="code-view" id="code-content-view">Generating Python source code...</pre>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-copy-code" class="mech-button">Copy Python Source</button>
+        <button id="btn-close-code-footer" class="mech-button">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/studio.js"></script>
+</body>
+</html>

@@ -4,7 +4,7 @@
 
 ### **Deterministic Statecharts, Compile-Time Dominator Proofs & Zero-Trust Tool Gating for Enterprise LLMs**
 
-*"FastAPI meets XState for Regulated AI — where the LLM is never the orchestrator."*
+*"FastAPI meets XState for Regulated AI: where the LLM is never the orchestrator."*
 
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%20%7C%203.13%20%7C%203.14-2563eb.svg)](https://www.python.org/)
 [![Typed: mypy --strict & pyright](https://img.shields.io/badge/typing-PEP%20695%20%7C%20strict-0d9488.svg)](https://peps.python.org/pep-0695/)
@@ -14,7 +14,7 @@
 [![Patent: UK Patent Pending](https://img.shields.io/badge/patent-UK%20Patent%20Pending-b45309.svg)](PATENTS.md)
 [![Licence: Source-Available / Commercial](https://img.shields.io/badge/licence-Eval%20Free%20%7C%20Commercial%20Prod-0284c7.svg)](LICENSE)
 
-[**Quick Start**](#60-second-quick-start) · [**Why Blockstate?**](#why-blockstate) · [**4 Domain Examples**](#domain-examples-4-complete-walkthroughs) · [**CLI, DCG & Dominator Proofs**](#cli-reference-declarative-control-grammar--compile-time-verification) · [**Testing & Contracts**](#enterprise-testing-coverage--interface-contracts) · [**Licensing & Patent Notice**](#licensing-uk-patent-pending--commercial-production)
+[**Quick Start**](#60-second-quick-start) · [**Scaffolder & Visual Studio**](#-project-scaffolder-blockstate-init--visual-inspector-blockstate-studio) · [**Documentation & Tutorials**](#-documentation--tutorials) · [**4 Domain Examples**](#-domain-examples-4-complete-walkthroughs) · [**CLI & Dominator Proofs**](#️-cli-reference-declarative-control-grammar--compile-time-verification) · [**Testing & Contracts**](#-enterprise-testing-coverage--interface-contracts) · [**Licensing & Patent Notice**](#️-licensing-uk-patent-pending--commercial-production)
 
 </div>
 
@@ -22,22 +22,22 @@
 
 ## ⚡ Why Blockstate?
 
-Derived from **railway absolute block signalling**—where physical track circuits prevent a train from entering an occupied or unverified block section—and **deterministic state machines**, **Blockstate** brings mathematical execution guarantees to conversational AI.
+Derived from **railway absolute block signalling** (where physical track circuits prevent a train from entering an occupied or unverified block section) and **deterministic state machines**, **Blockstate** brings mathematical execution guarantees to conversational AI.
 
 Most agent frameworks (early LangChain, AutoGen, CrewAI) rely on the **ReAct (Reason + Act)** loop: they hand an LLM a global bag of tools and let probabilistic token generation decide which tool to call, when to transition between workflow steps, and how to mutate state.
 
-In **regulated enterprise domains**—retail banking, mortgage origination, insurance claims, healthcare triage, and telecommunications—giving an LLM autonomous control over execution flow and tool invocation is an unacceptable legal and operational liability (under **EU AI Act Articles 12 & 14**, **UK FCA SYSC 13.7**, **HIPAA**, and **SOC 2 Type II**).
+In **regulated enterprise domains** (retail banking, mortgage origination, insurance claims, healthcare triage, and telecommunications), giving an LLM autonomous control over execution flow and tool invocation introduces severe legal and operational liability under **EU AI Act Articles 12 & 14**, **UK FCA SYSC 13.7**, **HIPAA**, and **SOC 2 Type II**.
 
-At the same time, Blockstate avoids the **"Enterprise Island Trap"**: it is **not** designed to replace high-level enterprise orchestrators (such as LangGraph, Microsoft Semantic Kernel, AutoGen, or AWS Bedrock). Instead, Blockstate operates as a **transactional compliance execution enclave** that outer orchestrators invoke via a first-class `as_tool()` adapter whenever a conversation enters a regulated boundary.
+Blockstate also avoids the **"Enterprise Island Trap"** by operating as a **transactional compliance execution enclave** that high-level enterprise orchestrators (such as LangGraph, Microsoft Semantic Kernel, AutoGen, or AWS Bedrock) invoke via a first-class `as_tool()` adapter whenever a conversation enters a regulated boundary.
 
-**Blockstate fundamentally inverts the control hierarchy inside regulated workflows:**
+**Blockstate enforces six core guarantees inside regulated workflows:**
 
 1. **100% Deterministic State Transitions via Declarative Control Grammar (DCG):** The pure Python statechart runtime owns every transition and guard condition through the static **Declarative Control Grammar (`@Stage`, `@Transition`, `@Guard`)**. The LLM is demoted to a bounded semantic worker used strictly for structured slot extraction (Pass 1) and natural language rendering (Pass 2).
-2. **Zero-Trust Physical Tool Gating:** Unpermitted tools do not exist in the prompt schema or the Python `MappingProxyType` dispatch table for that turn. Prompt injection cannot invoke a tool that is physically absent from the active `@Stage` memory space.
+2. **Zero-Trust Physical Tool Gating:** Unpermitted tools do not exist in the prompt schema or the Python `MappingProxyType` dispatch table for that turn. Prompt injection cannot invoke a tool that is physically absent from the active `@Stage` memory space (`BLK-SEC-001`).
 3. **Compile-Time Mathematical Dominator Proofs (`blockstate verify`) & Rice's Theorem Boundaries:** Because unconstrained Python reflection (`getattr(self, dynamic_state)()`) is mathematically undecidable under **Rice's Theorem**, Blockstate enforces static DCG AST rules (`[Blockstate E014]`) and runs the **Lengauer-Tarjan dominator tree algorithm** in `< 50ms` during CI/CD to prove that mandatory compliance checkpoints (e.g. `verify_identity`) strictly dominate protected actions (e.g. `disburse_funds`) across every possible branch before code reaches production.
-4. **Pushdown Automata for Conversational Digressions (`TaskStack`):** Users rarely fill out multi-turn forms linearly. When a customer asks *"Will this affect my no-claims bonus?"* halfway through an insurance claim, Blockstate pushes a read-only child `TaskFrame` onto the call stack, answers the FAQ, pops the frame, and resumes slot collection with parent data 100% intact—reducing graph edge complexity from $\mathcal{O}(N \times M)$ to $\mathcal{O}(N + M)$.
-5. **Recursive $\Delta$-Hydration (`PartialSlotModel`):** Declare a standard Pydantic v2 model (including deeply nested child models) on `@Stage(collect=ClaimModel)`. Blockstate automatically relaxes missing fields across intermediate turns, validates supplied fields immediately, locks validated fields against accidental overwrite, and short-circuits invalid fields for targeted re-elicitation.
-6. **Tokenised `PIIVault` & Hash-Chained `TurnLedger`:** Sensitive PII/PHI is replaced at ingress with HMAC-keyed session tokens (`<VAULT:POSTCODE_01>`) before touching any LLM or telemetry log, while every turn is recorded in a tamper-evident SHA-256 hash chain.
+4. **Pushdown Automata for Conversational Digressions (`TaskStack`):** Users rarely fill out multi-turn forms linearly. When a customer asks *"Will this affect my no-claims bonus?"* halfway through an insurance claim, Blockstate pushes a read-only child `TaskFrame` onto the call stack, answers the FAQ, pops the frame, and resumes slot collection with parent data 100% intact, reducing graph edge complexity from $\mathcal{O}(N \times M)$ to $\mathcal{O}(N + M)$.
+5. **Recursive $\Delta$-Hydration (`PartialSlotModel`):** Declare a standard Pydantic v2 model (including deeply nested child models) on `@Stage(collect=ClaimModel)`. Blockstate automatically relaxes missing fields across intermediate turns, validates supplied fields immediately, locks validated fields against accidental overwrite (`BLK-SEC-002`), and short-circuits invalid fields for targeted re-elicitation (`BLK-VAL-002`).
+6. **Tokenised `PIIVault` & Hash-Chained `TurnLedger`:** Sensitive PII/PHI is replaced at ingress with HMAC-keyed session tokens (`<VAULT:POSTCODE_01>`) before touching any LLM or telemetry log, while every turn is recorded in a tamper-evident `RFC 8785 JCS` `SHA-256` hash chain.
 
 ---
 
@@ -77,7 +77,7 @@ flowchart TD
 | **Mathematical Dominator Proofs** | ❌ None | ❌ None | ❌ None | ❌ None | **✅ Lengauer-Tarjan (`KYC dom Payout`)** |
 | **Multi-Turn Digression Stack** | ❌ Manual subgraphs ($\mathcal{O}(N \times M)$) | ⚠️ Concurrent DSL flows | ❌ Manual event state | ❌ Manual node branching | **✅ LIFO `TaskStack` Pushdown Automata** |
 | **Nested Multi-Turn Slot Filling** | ❌ Custom prompt & state boilerplate | ⚠️ Colang dialog scripts | ❌ Manual state dicts | ❌ Single-turn structured output | **✅ Recursive `PartialSlotModel` $\Delta$-Hydration** |
-| **Turn Latency Architecture** | $1\text{--}3\text{s}$ serialised LLM calls | $3\text{--}6\text{s}$ multi-hop rails | Single-pass async LLM | Single-pass async LLM | **✅ Two-Pass (`<50ms` ONNX + `<15ms` Template/LLM)** |
+| **Turn Latency Architecture** | $1\text{ to }3\text{s}$ serialised LLM calls | $3\text{ to }6\text{s}$ multi-hop rails | Single-pass async LLM | Single-pass async LLM | **✅ Two-Pass (`<50ms` ONNX + `<15ms` Template/LLM)** |
 | **Ingress PII Tokenisation** | ❌ Manual middleware | ⚠️ Presidio text masking | ❌ Manual hooks | ❌ Manual preprocessing | **✅ Built-in `PIIVault` (`<VAULT:ID>`) + `Detokenise[T]`** |
 | **Tamper-Evident Audit Log** | ❌ State checkpoints only | ❌ Unstructured event logs | ❌ Telemetry traces only | ❌ Message history JSON | **✅ SHA-256 Hash-Chained `TurnLedger` + WAL** |
 
@@ -85,9 +85,11 @@ flowchart TD
 
 ## 🚀 60-Second Quick Start
 
+For a complete step-by-step walkthrough, see [**Getting Started (`docs/GETTING_STARTED.md`)**](docs/GETTING_STARTED.md).
+
 ### 1. Installation
 
-Blockstate requires **Python 3.12+** (leveraging PEP 695 type parameters). The core package is ultra-lightweight (`<= 40MB` RAM, zero database or cloud SDK bloat) and includes `InMemoryStorageBackend`. Install optional v1 adapters via PEP 621 extras:
+Blockstate requires **Python 3.12+** (leveraging PEP 695 type parameters). The core package is lightweight (`<= 40MB` RAM, zero database or cloud SDK bloat) and includes `InMemoryStorageBackend`. Install optional v1 adapters via PEP 621 extras:
 
 ```bash
 # Core runtime, DCG AST compiler, CLI & InMemoryStorageBackend
@@ -111,7 +113,7 @@ uv add "blockstate[all]"
 > 2. **Local SQLite with WAL mode (`SQLiteStorageBackend` with `PRAGMA journal_mode=WAL` via `aiosqlite`):** For zero-dependency local development and edge deployments.
 > 3. **PostgreSQL via async SQLAlchemy (`PostgresStorageBackend` via `SQLAlchemy[asyncio]` + `asyncpg`):** For cloud production workloads.
 >
-> *Redis, Microsoft SQL Server, and AWS DynamoDB are formally deferred to **v1.2+** via the pluggable async `StorageBackend` SPI.*
+> *Redis, Microsoft SQL Server, and AWS DynamoDB are formally scheduled for **v1.2+** via the pluggable async `StorageBackend` SPI.*
 
 ### 2. Configure Your Environment
 
@@ -123,7 +125,7 @@ cp .env.example .env
 
 ### 3. Build, Verify & Run Your First Governed Agent
 
-Create `QuickStartAgent` in `agent.py` using the **Declarative Control Grammar (DCG)** (`@Stage`, `@Transition`, `@Guard`, `ChoicePayload`):
+Create `QuickStartRefundAgent` in `agent.py` using the **Declarative Control Grammar (DCG)** (`@Stage`, `@Transition`, `@Guard`, `ChoicePayload`):
 
 ```python
 import asyncio
@@ -183,13 +185,55 @@ $ blockstate verify agent.py --dominates "verify_identity -> [instant_refund, ma
 
 ---
 
+## 🏗️ Project Scaffolder (`blockstate init`) & Visual Inspector (`blockstate studio`)
+
+Blockstate includes a zero-dependency project scaffolder and an offline visual topology and dominator verification studio. See [**CLI & Studio Reference (`docs/CLI_AND_STUDIO_REFERENCE.md`)**](docs/CLI_AND_STUDIO_REFERENCE.md) for full details.
+
+### 1. Scaffold Regulated Enclaves in Seconds (`blockstate init`)
+
+Generate a self-contained compliance enclave repository (complete with the DCG statechart agent, an automated `pytest` suite testing AST compilation, Lengauer-Tarjan dominance, bypass detection, and `BLK-SEC-001` tool gating, `.env.example`, and a GitHub Actions pull-request verification workflow):
+
+```bash
+# Scaffold a retail banking KYC & Faster Payments enclave
+blockstate init ./my_banking_enclave --template banking
+
+# Available starter templates: banking | insurance | healthcare | minimal
+blockstate init ./my_fnol_enclave --template insurance --name motor_fnol
+```
+
+### 2. Local Visual Statechart Canvas & Dominator Verifier (`blockstate studio`)
+
+Launch the local **Blockstate Studio** web server (`http.server.ThreadingHTTPServer`, zero external frontend dependencies) to inspect your statechart topology, run interactive sub-5ms Lengauer-Tarjan dominator proofs, replay `.blockstate/traces.jsonl` timelines, generate PEP 695 Python 3.12+ code, and export signed `SHA-256` MRM/CISO Dominance Audit Certificates:
+
+```bash
+# Launch Studio on http://127.0.0.1:8420 with live file hot-reloading
+blockstate studio ./my_banking_enclave/banking_agent.py
+```
+
+---
+
+## 📖 Documentation & Tutorials
+
+| Resource | Description | Links |
+| :--- | :--- | :--- |
+| **60-Second Quickstart Guide** | Installation, scaffolding with `blockstate init`, running `blockstate check` and `blockstate verify`, launching `blockstate studio`, and executing a multi-turn session. | [**`docs/GETTING_STARTED.md`**](docs/GETTING_STARTED.md) |
+| **CLI & Studio Developer Reference** | Complete reference for `check`, `verify`, `export`, `trace`, `init`, and `studio`, exit codes, error code taxonomy (`BLK-AST-014` to `BLK-STO-004`), Studio REST API, and signed `SHA-256` MRM Dominance Audit Certificates. | [**`docs/CLI_AND_STUDIO_REFERENCE.md`**](docs/CLI_AND_STUDIO_REFERENCE.md) |
+| **Tutorial 1: Motor Insurance FNOL & Adversarial Audit** | Enterprise First Notice of Loss (FNOL) statechart with PAS policy verification, `TaskStack` pushdown digressions, YAML prompt isolation, and a 6-trial penetration audit suite. | [**Tutorial (`motor_insurance_claim_tutorial.md`)**](docs/tutorials/motor_insurance_claim_tutorial.md) · [**HTML Edition**](docs/tutorials/motor_insurance_claim_tutorial.html) · [**`01_motor_insurance_claim.py`**](examples/01_motor_insurance_claim.py) · [**`05_motor_insurance_claim_live.py`**](examples/05_motor_insurance_claim_live.py) · [**`05_defensive_audit.py`**](examples/05_defensive_audit.py) |
+| **Tutorial 2: Retail Banking KYC Dominator Proofs** | Proving `VerifyKYC dom [TransferFunds]` and `step_up_mfa_kyc dom [faster_payments_uk, sepa_euro_transfer, swift_international]` in `< 50ms` with `LengauerTarjanSolver` and catching a rogue VIP bypass edge in CI with a synthesised BFS counterexample path. | [**Tutorial (`02_banking_kyc_dominator_tutorial.md`)**](docs/tutorials/02_banking_kyc_dominator_tutorial.md) · [**`02_banking_kyc_dominator.py`**](examples/02_banking_kyc_dominator.py) |
+| **Tutorial 3: Healthcare HIPAA & NHS `PIIVault`** | Deterministic ingress tokenisation (NHS Modulus-11 & Luhn Mod-10 checksums), `HMAC-SHA256` session deduplication, `AES-256-GCM` AAD binding (`session_id:schema_version:revision_id`), volatile validator detokenisation (`wrap_detokenising_validator`), and `Detokenise[T]` tool unwrapping. | [**Tutorial (`03_healthcare_hipaa_piivault_tutorial.md`)**](docs/tutorials/03_healthcare_hipaa_piivault_tutorial.md) · [**`03_healthcare_hipaa_vault.py`**](examples/03_healthcare_hipaa_vault.py) |
+| **Tutorial 4: LangGraph Enclave Handoff (`as_tool()`)** | Mounting a verified Blockstate mortgage origination compliance enclave inside an outer LangGraph router via `as_tool()` and `run_as_subflow()` returning the frozen 3-state discriminated union (`BlockstateTurnYield`, `BlockstateTurnComplete`, `BlockstateTurnAborted`). | [**Tutorial (`04_langgraph_enclave_handoff_tutorial.md`)**](docs/tutorials/04_langgraph_enclave_handoff_tutorial.md) · [**`04_langchain_subflow_handoff.py`**](examples/04_langchain_subflow_handoff.py) |
+| **Architecture Spine & Interactive Deck** | Normative architectural decisions (`AD-1` to `AD-14`), Hexagonal ports and adapters boundaries, wire protocols, and self-contained HTML+SVG visual deck. | [**`docs/architecture/ARCHITECTURE-SPINE.md`**](docs/architecture/ARCHITECTURE-SPINE.md) · [**`architecture-deck.html`**](docs/architecture/architecture-deck.html) |
+| **Product Roadmap, PRD & Specification** | Prioritised `v1.1`, `v1.2`, and `v2.0+` roadmap, functional requirements (`FR-1` to `FR-22`), and regulatory compliance mappings. | [**`docs/ROADMAP.md`**](docs/ROADMAP.md) · [**`docs/spec/prd.md`**](docs/spec/prd.md) · [**`docs/spec/SPEC.md`**](docs/spec/SPEC.md) |
+
+---
+
 ## 📚 Domain Examples (4 Complete Walkthroughs)
 
 To demonstrate how Blockstate adapts across industries and architectural patterns, explore these four complete, production-grade examples:
 
 ---
 
-### Example 1: Motor Insurance Claims — Recursive Nested $\Delta$-Hydration, `on_breach` & `TaskStack` Digressions
+### Example 1: Motor Insurance Claims: Recursive Nested $\Delta$-Hydration, `on_breach` & `TaskStack` Digressions
 
 **Scenario:** An insurance customer files a motor claim requiring nested address details, vehicle registration, and damage estimates. Mid-conversation, the customer goes off-script to ask *"Will claiming for a cracked windscreen affect my no-claims bonus?"*. Furthermore, if the policy covers commercial haulage, the claim must immediately exit early (`on_breach`) before asking remaining questions.
 
@@ -285,11 +329,11 @@ class MotorInsuranceClaimAgent(Agent):
         return Transition.end(canned_response="Transferring you to a live claims specialist with your details.")
 ```
 
-**What happens at runtime across 4 turns:**
+**What happens at runtime across 3 turns:**
 1. **Turn 1:** User says *"Hi, my policy is POL-884120, it's for personal use, and someone bumped my bumper in Manchester (`M1 1AG`) yesterday."*
    - `PartialSlotModel` validates and locks `policy_number`, `vehicle_usage`, `incident_date`, `location.city`, and `location.postcode`.
    - $\Delta$-Hydration computes $\Delta = \{\text{`location.street`}, \text{`estimated_damage_gbp`}\}$ and prompts only for those two missing fields.
-2. **Turn 2 (Digression):** User asks *"Wait—before I tell you the street and cost, will this hurt my no-claims discount?"*
+2. **Turn 2 (Digression):** User asks *"Wait, before I tell you the street and cost, will this hurt my no-claims discount?"*
    - Pass 1 classifies the permitted digression `ncd_policy_faq`.
    - `TaskStack` pushes a child `TaskFrame(stage="ncd_policy_faq")`. Only `query_policy_handbook_rag` is present in the dispatch table (`authorise_bacs_payout` does not exist).
    - The FAQ is answered, `Transition.pop_frame()` pops the child frame, and Blockstate automatically resumes `intake_claim` with the 5 previously collected fields untouched.
@@ -298,7 +342,7 @@ class MotorInsuranceClaimAgent(Agent):
 
 ---
 
-### Example 2: Retail Banking Wire Transfer — Multi-Branch KYC Dominator Proofs & Zero-LLM `ChoicePayload`
+### Example 2: Retail Banking Wire Transfer: Multi-Branch KYC Dominator Proofs & Zero-LLM `ChoicePayload`
 
 **Scenario:** A retail bank offers three payment rails (`faster_payments_uk`, `sepa_euro_transfer`, `swift_international`). Under UK FCA SYSC 13.7 operational risk rules, the Model Risk Management (MRM) team requires mathematical proof that **every payment rail** is strictly dominated by `step_up_mfa_kyc`, plus sub-120ms deterministic choice menus (`ChoicePayload`) for regulatory fee disclosures.
 
@@ -388,7 +432,7 @@ $ blockstate verify wire_agent.py \
 
 ---
 
-### Example 3: Healthcare Patient Triage — HIPAA/GDPR `PIIVault`, `Detokenise[T]` & SHA-256 `TurnLedger`
+### Example 3: Healthcare Patient Triage: HIPAA/GDPR `PIIVault`, `Detokenise[T]` & SHA-256 `TurnLedger`
 
 **Scenario:** A patient contacts an NHS/healthcare triage assistant providing their NHS Number, postcode, and symptoms. Under GDPR and HIPAA Safe Harbor rules, raw patient identifiers must **never** be transmitted to external commercial LLM APIs or written to telemetry logs, yet the internal electronic health record (EHR) lookup tool requires the real NHS Number to verify registration.
 
@@ -459,9 +503,9 @@ $ blockstate trace --session 0192ce18-7b40-7000-8000-4a91f0012c9a
 
 ---
 
-### Example 4: Outer Orchestrator Enclave (`as_tool()`) — Embedding Blockstate Inside LangGraph, Semantic Kernel, AutoGen or AWS Bedrock
+### Example 4: Outer Orchestrator Enclave (`as_tool()`): Embedding Blockstate Inside LangGraph, Semantic Kernel, AutoGen or AWS Bedrock
 
-**Scenario:** Your enterprise already runs a high-level orchestrator (LangGraph, Microsoft Semantic Kernel, AutoGen, or AWS Bedrock) as an open-domain concierge router. Rather than forcing a rip-and-replace (the **"Enterprise Island Trap"**), Blockstate operates as a **transactional compliance execution enclave**: when the user asks to originate a mortgage or file a regulated claim, the outer orchestrator invokes the entire verified Blockstate statechart as a single validated tool via `from blockstate.adapters.langchain import as_tool`.
+**Scenario:** Your enterprise already runs a high-level orchestrator (LangGraph, Microsoft Semantic Kernel, AutoGen, or AWS Bedrock) as an open-domain concierge router. Blockstate operates as a **transactional compliance execution enclave**: when the user asks to originate a mortgage or file a regulated claim, the outer orchestrator invokes the entire verified Blockstate statechart as a single validated tool via `from blockstate.adapters.langchain import as_tool`.
 
 ```python
 from blockstate.adapters.langchain import as_tool
@@ -526,14 +570,16 @@ Transitions must reference static State definitions to enable Lengauer-Tarjan do
 
 ### CLI Commands (`blockstate`)
 
-Blockstate ships a rich command-line toolkit (`blockstate`) powered by `Typer` and `Rich`:
+Blockstate ships a comprehensive command-line toolkit (`blockstate`) powered by `Typer` and `Rich` (see [**`docs/CLI_AND_STUDIO_REFERENCE.md`**](docs/CLI_AND_STUDIO_REFERENCE.md)):
 
 | Command | Purpose | CI / Production Usage |
 | :--- | :--- | :--- |
-| `blockstate check [PATH]` | Parses Python source files via `ast.parse` (zero code execution). Enforces **Declarative Control Grammar (DCG)** (`@Stage`, `@Transition`, `@Guard`), rejects dynamic transition targets with `[Blockstate E014]`, checks unreachable dead stages, and ensures zero `Transition` calls exist inside `@field_validator` methods (`FR-2`, `FR-10`). | Run in pre-commit & PR lint stage (`< 25ms`). |
-| `blockstate verify [PATH] --dominates "A -> [B, C]"` | Constructs the complete Control Flow Graph (including `on_breach`, `on_refusal`, and `on_max_turns_exceeded` edges) and executes the **Lengauer-Tarjan dominator tree algorithm** (`FR-11`). Emits a signed JSON/Markdown audit certificate or exits with code `1` and the exact violating counter-example path. | Mandatory MRM / FCA / EU AI Act compliance gate in CI. |
+| `blockstate init [DIR] --template <T>` | Scaffolds a ready-to-verify compliance enclave (`banking`, `insurance`, `healthcare`, `minimal`) with an automated `pytest` suite and GitHub Actions workflow. | Project bootstrap (`< 50ms`). |
+| `blockstate check [PATH]` | Parses Python source files via `ast.parse` (zero code execution). Enforces **Declarative Control Grammar (DCG)** (`@Stage`, `@Transition`, `@Guard`), rejects dynamic transition targets with `[Blockstate E014]`, checks unreachable dead stages (`BLK-AST-002`), and ensures zero `Transition` calls exist inside `@field_validator` methods (`FR-2`, `FR-10`). | Run in pre-commit & PR lint stage (`< 25ms`). |
+| `blockstate verify [PATH] --dominates "A -> [B, C]"` | Constructs the complete Control Flow Graph (including `on_breach`, `on_refusal`, `on_max_turns_exceeded`, and `on_security_violation` edges) and executes the **Lengauer-Tarjan dominator tree algorithm** (`FR-11`). Emits a verification certificate or exits with code `1` and the exact violating counter-example path. | Mandatory MRM / FCA / EU AI Act compliance gate in CI. |
 | `blockstate export [PATH] --format [mermaid\|json]` | Exports verified statechart topologies, stage tool whitelists, and guard annotations to Markdown Mermaid diagrams or JSON Schema (`FR-12`). | Auto-generate PR architecture previews & audit docs. |
-| `blockstate trace --session <UUID>` | Replays a multi-turn session from `.blockstate/traces.jsonl` or a configured `StorageBackend` (`FR-21`), verifying SHA-256 `TurnLedger` hash continuity and rendering turn-by-turn slot hydration and tool boundaries. | Local developer debugging & SRE incident response (`< 5 min` MTTR). |
+| `blockstate trace --session <UUID>` | Replays a multi-turn session from `.blockstate/traces.jsonl` (`FR-21`), verifying SHA-256 `TurnLedger` hash continuity and rendering turn-by-turn slot hydration and tool boundaries. | Local developer debugging & SRE incident response (`< 5 min` MTTR). |
+| `blockstate studio [PATH]` | Launches the local HTTP visual statechart canvas, sub-5ms Lengauer-Tarjan dominator overlay, trace replay inspector, PEP 695 codegen workbench, and signed `SHA-256` MRM Dominance Audit Certificate exporter. | Interactive architecture inspection & MRM certification. |
 
 ---
 
@@ -554,10 +600,10 @@ Coverage is measured with `pytest-cov` (`--cov-branch`) and strictly enforced in
 
 To prevent integration failures where an agent works against `InMemoryStorageBackend` in unit tests but fails under `SQLiteStorageBackend` or `PostgresStorageBackend` in production, every port in `blockstate.ports` defines an abstract **Interface Contract Test Suite**:
 
-- **`StorageBackendContractSuite` (`StateStoreContractSuite`):** Automatically tests all three canonical v1 `StorageBackend` drivers (`InMemoryStorageBackend`, `SQLiteStorageBackend` with `PRAGMA journal_mode=WAL`, and `PostgresStorageBackend` via `SQLAlchemy[asyncio]` + `asyncpg`)—as well as any v1.2+ SPI plugins (Redis, Microsoft SQL Server, AWS DynamoDB)—against identical assertions:
-  - Concurrent `acquire_lease` contention (verifying `ConcurrentSessionError` / `BLK-CON-409` after exactly `2000ms`).
+- **`StorageBackendContractSuite` (`StateStoreContractSuite`):** Automatically tests all three canonical v1 `StorageBackend` drivers (`InMemoryStorageBackend`, `SQLiteStorageBackend` with `PRAGMA journal_mode=WAL`, and `PostgresStorageBackend` via `SQLAlchemy[asyncio]` + `asyncpg`) as well as any v1.2+ SPI plugins (Redis, Microsoft SQL Server, AWS DynamoDB) against identical assertions:
+  - Concurrent `acquire_lease` contention (verifying `ConcurrentSessionError` / `BLK-CON-409` after `2000ms`).
   - Stale lease automatic TTL expiry (`30000ms`) and active `10000ms` heartbeat renewal.
-  - Optimistic Compare-And-Swap (`revision_id`) conflict detection on simultaneous checkpoint writes.
+  - Optimistic Compare-And-Swap (`revision_id`) conflict detection on simultaneous checkpoint writes (`BLK-STO-002`).
   - Rolling-deployment `SchemaUpcaster` migration (`schema_version: 1 -> 2`) on historical session payloads.
   - Boundary payloads: empty strings, 64KB slot strings, maximum nesting depth (`depth=8`), Unicode zero-width joiners/RTL overrides, null-byte rejection, and leap-year/UTC midnight timestamps.
 - **`PIIStripperContractSuite`:** Verifies deterministic token stability within a session, zero token collision across distinct PII values, resistance to partial-token prompt injection (`<VAULT:...>`), and round-trip `Detokenise[T]` restoration.
@@ -617,7 +663,7 @@ Every third-party runtime and optional dependency used by `blockstate` is audite
 | **v1 StorageBackend & Ledger Extras** | `aiosqlite` (SQLite WAL), `SQLAlchemy` + `asyncpg` (PostgreSQL), `aioboto3` (S3 WORM) | `MIT`, `Apache-2.0` | **None (0%)** |
 | **Observability Extra** | `opentelemetry-api`, `opentelemetry-sdk` | `Apache-2.0` | **None (0%)** |
 
-*(Note: Redis, Microsoft SQL Server, and AWS DynamoDB storage adapters are deferred to v1.2+ via the formal `StorageBackend` SPI in `src/blockstate/ports/storage.py`.)*
+*(Note: Redis, Microsoft SQL Server, and AWS DynamoDB storage adapters are scheduled for v1.2+ via the formal `StorageBackend` SPI in `src/blockstate/ports/storage.py`.)*
 
 For the complete package-by-package version, licence, and upstream repository manifest, see [**THIRD_PARTY_LICENSES.md**](THIRD_PARTY_LICENSES.md).
 
@@ -630,13 +676,18 @@ For the complete package-by-package version, licence, and upstream repository ma
 
 ---
 
-## 🗺️ Architectural Documentation & Artifacts
+## 🗺️ Architectural Documentation & Artefacts
 
-- [**Project Licence (`LICENSE`)**](LICENSE) & [**Statutory UK Patent Pending Notice (`PATENTS.md`)**](PATENTS.md) — Dual-licensing terms and UK Patents Act 1977 s.62(1) notice.
-- [**Product & Engineering Roadmap (`docs/ROADMAP.md`)**](docs/ROADMAP.md) — Prioritised `v1.1`, `v1.2`, and `v2.0+` feature backlog (`blockstate studio` visual AST canvas & `.py` codegen, `blockstate init`, Semantic Kernel/AutoGen/Bedrock enclaves, Redis/MSSQL/DynamoDB drivers, and `blockstate fuzz`).
-- [**Enterprise Motor Insurance Claims Tutorial & Adversarial Audit (`motor_insurance_claim_tutorial.md`)**](docs/tutorials/motor_insurance_claim_tutorial.md) ([**HTML Edition**](docs/tutorials/motor_insurance_claim_tutorial.html) · [**Live Agent (`05_motor_insurance_claim_live.py`)**](examples/05_motor_insurance_claim_live.py) · [**6-Trial Penetration Suite (`05_defensive_audit.py`)**](examples/05_defensive_audit.py)) — Full worked enterprise FNOL walkthrough with zero-stub PAS verification, System-1 semantic routing, YAML prompt isolation, and Lengauer-Tarjan dominator proofs.
-- [**Architecture Spine (`ARCHITECTURE-SPINE.md`)**](docs/architecture/ARCHITECTURE-SPINE.md) — The normative build substrate fixing all 14 Architectural Decisions (`AD-1` to `AD-14`), Hexagonal boundaries, wire protocols, and stack versions.
-- [**Interactive Visual Architecture Deck (`architecture-deck.html`)**](docs/architecture/architecture-deck.html) — Self-contained HTML+SVG executive and engineering walkthrough deck.
-- [**Product Requirements Document (`prd.md`)**](docs/spec/prd.md) — Functional requirements (`FR-1` to `FR-22`), user journeys (`UJ-1` to `UJ-3`), and regulatory mapping (`EU AI Act`, `UK FCA`, `HIPAA`, `SOC 2`).
-- [**Technical Specification (`SPEC.md`)**](docs/spec/SPEC.md) — Execution specification, state transitions, and compliance reference mappings.
+- [**Getting Started (`docs/GETTING_STARTED.md`)**](docs/GETTING_STARTED.md): 60-second quickstart covering installation, `blockstate init`, `blockstate check`, `blockstate verify`, `blockstate studio`, and multi-turn session execution.
+- [**CLI & Studio Reference (`docs/CLI_AND_STUDIO_REFERENCE.md`)**](docs/CLI_AND_STUDIO_REFERENCE.md): Complete CLI command manual, exit codes, error code catalogue (`BLK-AST-014` to `BLK-STO-004`), and MRM Dominance Audit Certificate export.
+- [**Project Licence (`LICENSE`)**](LICENSE) & [**Statutory UK Patent Pending Notice (`PATENTS.md`)**](PATENTS.md): Dual-licensing terms and UK Patents Act 1977 s.62(1) notice.
+- [**Product & Engineering Roadmap (`docs/ROADMAP.md`)**](docs/ROADMAP.md): Prioritised `v1.1`, `v1.2`, and `v2.0+` feature backlog (`blockstate studio` visual AST canvas & `.py` codegen, `blockstate init`, Semantic Kernel/AutoGen/Bedrock enclaves, Redis/MSSQL/DynamoDB drivers, and `blockstate fuzz`).
+- [**Enterprise Motor Insurance Claims Tutorial & Adversarial Audit (`motor_insurance_claim_tutorial.md`)**](docs/tutorials/motor_insurance_claim_tutorial.md) ([**HTML Edition**](docs/tutorials/motor_insurance_claim_tutorial.html) · [**Live Agent (`05_motor_insurance_claim_live.py`)**](examples/05_motor_insurance_claim_live.py) · [**6-Trial Penetration Suite (`05_defensive_audit.py`)**](examples/05_defensive_audit.py)): Full worked enterprise FNOL walkthrough with zero-stub PAS verification, System-1 semantic routing, YAML prompt isolation, and Lengauer-Tarjan dominator proofs.
+- [**Retail Banking KYC Dominator Tutorial (`02_banking_kyc_dominator_tutorial.md`)**](docs/tutorials/02_banking_kyc_dominator_tutorial.md) ([**Reference Agent (`02_banking_kyc_dominator.py`)**](examples/02_banking_kyc_dominator.py)): Step-by-step walkthrough of `LengauerTarjanSolver` dominance verification and BFS counterexample synthesis on rogue bypass edges.
+- [**Healthcare HIPAA & NHS `PIIVault` Tutorial (`03_healthcare_hipaa_piivault_tutorial.md`)**](docs/tutorials/03_healthcare_hipaa_piivault_tutorial.md) ([**Reference Agent (`03_healthcare_hipaa_vault.py`)**](examples/03_healthcare_hipaa_vault.py)): Deterministic ingress tokenisation (NHS Modulus-11 & Luhn Mod-10), `HMAC-SHA256` session deduplication, `AES-256-GCM` AAD binding, `wrap_detokenising_validator`, and `Detokenise[T]`.
+- [**LangGraph Enclave Handoff Tutorial (`04_langgraph_enclave_handoff_tutorial.md`)**](docs/tutorials/04_langgraph_enclave_handoff_tutorial.md) ([**Reference Agent (`04_langchain_subflow_handoff.py`)**](examples/04_langchain_subflow_handoff.py)): Mounting a verified Blockstate compliance enclave inside an outer LangGraph router via `as_tool()`.
+- [**Architecture Spine (`ARCHITECTURE-SPINE.md`)**](docs/architecture/ARCHITECTURE-SPINE.md): The normative build substrate fixing all 14 Architectural Decisions (`AD-1` to `AD-14`), Hexagonal boundaries, wire protocols, and stack versions.
+- [**Interactive Visual Architecture Deck (`architecture-deck.html`)**](docs/architecture/architecture-deck.html): Self-contained HTML+SVG executive and engineering walkthrough deck.
+- [**Product Requirements Document (`prd.md`)**](docs/spec/prd.md): Functional requirements (`FR-1` to `FR-22`), user journeys (`UJ-1` to `UJ-3`), and regulatory mapping (`EU AI Act`, `UK FCA`, `HIPAA`, `SOC 2`).
+- [**Technical Specification (`SPEC.md`)**](docs/spec/SPEC.md): Execution specification, state transitions, and compliance reference mappings.
 - [**Third-Party Licences (`THIRD_PARTY_LICENSES.md`)**](THIRD_PARTY_LICENSES.md) & [**Security Policy (`SECURITY.md`)**](SECURITY.md).
