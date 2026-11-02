@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "blockstate"
-version = "0.0.1a1"
+version = "0.0.1a3"
 description = "Deterministic statecharts, compile-time dominator proofs, and zero-trust tool gating for enterprise LLMs."
 readme = "README.md"
 requires-python = ">=3.12,<3.15"

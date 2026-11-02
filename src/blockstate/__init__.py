@@ -58,7 +58,7 @@ from blockstate.security import (
     Vaulted,
 )
 
-__version__ = "0.0.1a1"
+__version__ = "0.0.1a3"
 
 __all__: list[str] = [
     "UNSET",

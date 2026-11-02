@@ -342,7 +342,7 @@ wheels = [
 
 [[package]]
 name = "blockstate"
-version = "0.0.1a1"
+version = "0.0.1a3"
 source = { editable = "." }
 dependencies = [
     { name = "cryptography" },
